@@ -1,0 +1,28 @@
+# Compiled binary files
+*.exe
+*.out
+*.o
+*.a
+
+# Log files
+*.log
+
+# Build directories
+bin/
+pkg/
+dist/
+vendor/
+
+# Dependency directories
+vendor/
+
+# IDE/Editor specific files
+.idea/
+.vscode/
+
+# Go specific files
+*.test
+*.prof
+*.cover
+build/
+.venv/
