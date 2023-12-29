@@ -46,7 +46,10 @@ func run_text_editor() {
 	err := termbox.Init()
 	if err != nil {fmt.Println(err); os.Exit(1) } 
 	for {
-		print_message(25, 11, termbox.ColorDefault, termbox.ColorDefault, "Cub -- The simple text editor." )
+		COLS, ROWS = termbox.Size(); ROWS --
+		if COLS < 78 { COLS = 78 }
+		termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+		display_text_buffer()
 		termbox.Flush()
 		event := termbox.PollEvent()
 		if event.Type == termbox.EventKey && event.Key == termbox.KeyEsc {
