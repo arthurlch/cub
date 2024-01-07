@@ -22,7 +22,6 @@ var undo_buffer = [][]rune{}
 var copy_buffer = [][]rune{} 
 var modified bool
 
-
 func read_file (filename string) {
 	file, err := os.Open(filename)
 
@@ -51,7 +50,7 @@ func read_file (filename string) {
 func display_text_buffer() {
 	 var row, col int 
 	 for row = 0; row < ROWS; row++ {
-		text_buffer_row := row + offsetCol
+		text_buffer_row := row + offsetRow		
 		for col = 0; col < COLS; col++ {
 			text_buffer_col := col + offsetCol
 			if text_buffer_row >= 0 && text_buffer_row < len(text_buffer) && text_buffer_col < len(text_buffer[text_buffer_row]) {
@@ -70,20 +69,25 @@ func display_text_buffer() {
 
 func scroll_text_buffer() {
 	if currentRow < offsetRow {
-		offsetRow = currentRow
-	}
-	if currentCol < offsetCol {
-		offsetCol = currentCol
+			offsetRow = currentRow
 	}
 
 	if currentRow >= offsetRow + ROWS {
 		offsetRow = currentRow - ROWS + 1
 	}
 
+	if currentCol < offsetCol {
+			offsetCol = currentCol
+	}
+
 	if currentCol >= offsetCol + COLS {
-		offsetCol = currentCol - COLS + 1
+			offsetCol = currentCol - COLS + 1
+			if offsetCol < 0 {
+					offsetCol = 0
+			}
 	}
 }
+
 
 func display_status_bar() {
 	var mode_status string 
@@ -140,8 +144,7 @@ func process_keypress() {
 	key_event := get_key() 
 	if key_event.Key == termbox.KeyEsc { termbox.Close(); os.Exit(0) 
 	} else if key_event.Ch != 0 {
-		// handler chars etc
-	} else {
+ 	} else {
 		switch key_event.Key {
 		case termbox.KeyArrowUp: if currentRow != 0 { currentRow--}
 		case termbox.KeyArrowDown: if currentRow < len(text_buffer) - 1 {currentRow++} 
@@ -159,7 +162,21 @@ func process_keypress() {
 				currentRow++
 				currentCol = 0
 			}
-		}	
+		case termbox.KeyHome: currentCol = 0
+		case termbox.KeyEnd: currentCol = len(text_buffer[currentRow])
+		case termbox.KeyPgup: 
+			if currentRow - int(ROWS / 4) > 0 {
+				currentRow -= int(ROWS / 4)
+			}
+		case termbox.KeyPgdn: 
+			if currentRow + int(ROWS / 4) < len(text_buffer) - 1 {
+				currentRow += int(ROWS / 4  )
+			}
+		}
+	
+		if currentCol > len(text_buffer[currentRow ]) {
+			currentCol = len(text_buffer[currentRow])
+		} 
 	}
 	
 }
@@ -177,7 +194,6 @@ func run_text_editor() {
 		source_file = os.Args[1]
 		read_file(source_file) 
 	} else {
-		source_file = "outtttttttttttttt.txt" 
 		text_buffer = append(text_buffer, []rune{})
 	}
 	for {
