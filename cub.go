@@ -214,16 +214,22 @@ func process_keypress() {
 			delete_rune()
 			modified = true
 		
+	
 		case termbox.KeyBackspace2:
 			delete_rune()
 			modified = true
+
+		case termbox.KeyEnter: 
+			if mode == 1 {
+				insert_line()
+				modified = true
+			}
 		}
 		
 		if currentCol > len(text_buffer[currentRow ]) {
 			currentCol = len(text_buffer[currentRow])
 		} 
 	}
-	
 }
 
 func insert_runes(event termbox.Event) {
@@ -266,6 +272,21 @@ func delete_rune() {
 		copy(insert_line[len(text_buffer[currentRow]): ], append_line)
 		text_buffer[currentRow] = insert_line
 	}
+}
+
+func insert_line() {
+	right_line := make([]rune, len(text_buffer[currentRow][currentCol:]))
+	copy(right_line, text_buffer[currentRow][currentCol:])
+	left_line := make([]rune, len(text_buffer[currentRow][:currentCol]))
+	copy(left_line, text_buffer[currentRow][:currentCol])
+	text_buffer[currentRow] = left_line
+	currentRow++
+	currentCol = 0
+	new_text_buffer := make([][]rune, len(text_buffer) + 1)
+	copy(new_text_buffer, text_buffer[:currentRow])
+	new_text_buffer[currentRow] = right_line 
+	copy(new_text_buffer[currentRow + 1:], text_buffer[currentRow:])
+	text_buffer = new_text_buffer
 }
 
 func print_message(col, row int, forground, background termbox.Attribute, message string) {
