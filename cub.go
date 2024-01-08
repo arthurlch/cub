@@ -21,6 +21,8 @@ var text_buffer = [][]rune{}
 var undo_buffer = [][]rune{}
 var copy_buffer = [][]rune{} 
 var modified bool
+var quitKey termbox.Key
+
 
 func read_file (filename string) {
 	file, err := os.Open(filename)
@@ -142,8 +144,32 @@ func get_key() termbox.Event {
 
 func process_keypress() {
 	key_event := get_key() 
-	if key_event.Key == termbox.KeyEsc { termbox.Close(); os.Exit(0) 
+
+	if quitKey == termbox.KeyEsc && key_event.Ch == 'q' {
+		termbox.Close()
+		os.Exit(0)
+	}
+
+	if key_event.Key == termbox.KeyEsc {
+			quitKey = termbox.KeyEsc
+			return  
+	} else {
+			quitKey = 0 
+	}
+
+	if key_event.Key == termbox.KeyEsc { mode = 0
 	} else if key_event.Ch != 0 {
+
+		if mode == 1 {
+			insert_runes(key_event); 
+			modified = true
+		} else {
+			switch key_event.Ch {
+			case 'q': termbox.Close()
+			case 'e': mode = 1
+			}
+		}
+
  	} else {
 		switch key_event.Key {
 		case termbox.KeyArrowUp: if currentRow != 0 { currentRow--}
@@ -172,13 +198,74 @@ func process_keypress() {
 			if currentRow + int(ROWS / 4) < len(text_buffer) - 1 {
 				currentRow += int(ROWS / 4  )
 			}
+		case termbox.KeyTab:
+			if mode == 1 {
+				for i := 0; i < 4; i++ { 
+					insert_runes(key_event) 
+				}
+				modified = true 
+			}
+		case termbox.KeySpace:
+			if mode == 1 {
+				insert_runes(key_event)
+				modified = true
+			}
+		case termbox.KeyBackspace:
+			delete_rune()
+			modified = true
+		
+		case termbox.KeyBackspace2:
+			delete_rune()
+			modified = true
 		}
-	
+		
 		if currentCol > len(text_buffer[currentRow ]) {
 			currentCol = len(text_buffer[currentRow])
 		} 
 	}
 	
+}
+
+func insert_runes(event termbox.Event) {
+	if currentRow >= len(text_buffer) {
+			return
+	}
+
+	newRow := make([]rune, len(text_buffer[currentRow]) + 1)
+	copy(newRow, text_buffer[currentRow][:currentCol])
+
+	if event.Key == termbox.KeySpace {
+			newRow[currentCol] = ' '
+	} else if event.Key == termbox.KeyTab {
+			newRow[currentCol] = ' '
+	} else {
+			newRow[currentCol] = event.Ch
+	}
+
+	copy(newRow[currentCol+1:], text_buffer[currentRow][currentCol:])
+	text_buffer[currentRow] = newRow
+	currentCol++
+}
+
+func delete_rune() {
+	if currentCol > 0 && currentRow < len(text_buffer) {
+			currentCol--
+			newLine := make([]rune, len(text_buffer[currentRow])-1)
+			copy(newLine, text_buffer[currentRow][:currentCol])
+			copy(newLine[currentCol:], text_buffer[currentRow][currentCol+1:])
+			text_buffer[currentRow] = newLine
+	} else if currentRow > 0 {
+		append_line := make([]rune, len(text_buffer[currentRow]))
+		copy(append_line, text_buffer[currentRow][currentCol:])
+		new_text_buffer := make([][]rune, len(text_buffer)-1)
+		copy(new_text_buffer[:currentRow], text_buffer[:currentRow])
+		copy(new_text_buffer[:currentRow], text_buffer[currentRow +1:])
+		currentCol = len(text_buffer[currentRow])
+		insert_line := make([]rune, len(text_buffer[currentRow]) + len(append_line))
+		copy(insert_line[:len(text_buffer[currentRow])], text_buffer[currentRow])
+		copy(insert_line[len(text_buffer[currentRow]): ], append_line)
+		text_buffer[currentRow] = insert_line
+	}
 }
 
 func print_message(col, row int, forground, background termbox.Attribute, message string) {
