@@ -254,25 +254,22 @@ func insert_runes(event termbox.Event) {
 }
 
 func delete_rune() {
-	if currentCol > 0 && currentRow < len(text_buffer) {
-			currentCol--
-			newLine := make([]rune, len(text_buffer[currentRow])-1)
-			copy(newLine, text_buffer[currentRow][:currentCol])
-			copy(newLine[currentCol:], text_buffer[currentRow][currentCol+1:])
-			text_buffer[currentRow] = newLine
-	} else if currentRow > 0 {
-		append_line := make([]rune, len(text_buffer[currentRow]))
-		copy(append_line, text_buffer[currentRow][currentCol:])
-		new_text_buffer := make([][]rune, len(text_buffer)-1)
-		copy(new_text_buffer[:currentRow], text_buffer[:currentRow])
-		copy(new_text_buffer[:currentRow], text_buffer[currentRow +1:])
-		currentCol = len(text_buffer[currentRow])
-		insert_line := make([]rune, len(text_buffer[currentRow]) + len(append_line))
-		copy(insert_line[:len(text_buffer[currentRow])], text_buffer[currentRow])
-		copy(insert_line[len(text_buffer[currentRow]): ], append_line)
-		text_buffer[currentRow] = insert_line
+	if currentRow < len(text_buffer) {
+			if currentCol > 0 {
+					currentCol--
+					newLine := make([]rune, len(text_buffer[currentRow])-1)
+					copy(newLine, text_buffer[currentRow][:currentCol])
+					copy(newLine[currentCol:], text_buffer[currentRow][currentCol+1:])
+					text_buffer[currentRow] = newLine
+			} else if currentRow > 0 {
+					currentRow--
+					currentCol = len(text_buffer[currentRow])
+					text_buffer[currentRow] = append(text_buffer[currentRow], text_buffer[currentRow+1]...)
+					text_buffer = append(text_buffer[:currentRow+1], text_buffer[currentRow+2:]...)
+			}
 	}
 }
+
 
 func insert_line() {
 	right_line := make([]rune, len(text_buffer[currentRow][currentCol:]))
