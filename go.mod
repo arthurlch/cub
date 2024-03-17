@@ -1,4 +1,4 @@
-module github.com/arthurlch/cub.git
+module github.com/arthurlch/cub
 
 go 1.20
 
