@@ -22,5 +22,5 @@ type State struct {
 	CopyBuffer  [][]rune
 	Modified    bool
 	QuitKey     termbox.Key
+	StopBlink   chan struct{}
 }
-

@@ -12,8 +12,8 @@ type EditorState struct {
 	State *state.State
 }
 
-func NewEditorState() *EditorState {
-	return &EditorState{State: &state.State{}}
+func NewEditorState(sharedState *state.State) *EditorState {
+	return &EditorState{State: sharedState}
 }
 
 func (es *EditorState) StatusBar() {
@@ -37,10 +37,10 @@ func (es *EditorState) StatusBar() {
 	cursorStatus := fmt.Sprintf("Row %d Col %d ", st.CurrentRow+1, st.CurrentCol)
 	statusBar := modeStatus + fileStatus + cursorStatus
 	termbox.SetCursor(0, st.Rows)
-	print_message(0, st.Rows, termbox.ColorBlack, termbox.ColorWhite, statusBar)
+	printMessage(0, st.Rows, termbox.ColorBlack, termbox.ColorWhite, statusBar)
 }
 
-func print_message(col, row int, foreground, background termbox.Attribute, message string) {
+func printMessage(col, row int, foreground, background termbox.Attribute, message string) {
 	for _, ch := range message {
 		termbox.SetCell(col, row, ch, foreground, background)
 		col += runewidth.RuneWidth(ch)
