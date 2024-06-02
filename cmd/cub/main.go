@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/arthurlch/cub/cmd/pkg/editor"
 	"github.com/arthurlch/cub/cmd/pkg/state"
@@ -22,7 +23,7 @@ func runTextEditor() {
 	defer termbox.Close()
 
 	sharedState := &state.State{}
-
+	quitChan := make(chan struct{})
 	editorState := editor.NewEditorState(sharedState)
 	uiState := ui.NewEditorState(sharedState)
 
@@ -38,19 +39,44 @@ func runTextEditor() {
 	}
 
 	log.Println("Entering main loop...")
+	go handleEvents(editorState, quitChan)
+	mainLoop(sharedState, uiState, editorState, quitChan)
+}
+
+func mainLoop(sharedState *state.State, uiState *ui.EditorState, editorState *editor.EditorState, quitChan chan struct{}) {
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
 	for {
-		sharedState.Cols, sharedState.Rows = termbox.Size()
-		sharedState.Rows--
-		if sharedState.Cols < 78 {
-			sharedState.Cols = 78
+		select {
+		case <-quitChan:
+			log.Println("Quitting main loop.")
+			return
+		case <-ticker.C:
+			sharedState.Cols, sharedState.Rows = termbox.Size()
+			sharedState.Rows--
+			if sharedState.Cols < 78 {
+				sharedState.Cols = 78
+			}
+			termbox.Clear(ui.ColorBackground, ui.ColorBackground)
+			utils.ScrollTextBuffer(sharedState)
+			utils.DisplayTextBuffer(sharedState)
+			uiState.StatusBar()
+			termbox.SetCursor(sharedState.CurrentCol-sharedState.OffsetCol, sharedState.CurrentRow-sharedState.OffsetRow)
+			termbox.Flush()
 		}
-		termbox.Clear(ui.ColorBackground, ui.ColorBackground)
-		utils.ScrollTextBuffer(sharedState)
-		utils.DisplayTextBuffer(sharedState)
-		uiState.StatusBar()
-		termbox.SetCursor(sharedState.CurrentCol-sharedState.OffsetCol, sharedState.CurrentRow-sharedState.OffsetRow)
-		termbox.Flush()
-		editorState.ProcessKeyPress()
+	}
+}
+
+func handleEvents(editorState *editor.EditorState, quitChan chan struct{}) {
+	for {
+		select {
+		case <-quitChan:
+			log.Println("Stopping event handler.")
+			return
+		default:
+			editorState.ProcessKeyPress()
+		}
 	}
 }
 

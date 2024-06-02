@@ -24,6 +24,8 @@ func (es *EditorState) ProcessKeyPress() {
 		st.Cols, st.Rows = termbox.Size()
 		st.Rows--
 		termbox.Flush()
+	default:
+		log.Printf("Unhandled event type: %+v\n", keyEvent)
 	}
 }
 
@@ -71,6 +73,8 @@ func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 		handleViewModeKeyPress(st, keyEvent)
 	case state.EditMode:
 		handleEditModeKeyPress(es, keyEvent)
+	default:
+		log.Printf("Unhandled mode: %+v\n", st.Mode)
 	}
 }
 
@@ -119,6 +123,8 @@ func handleViewModeKeyPress(st *state.State, keyEvent termbox.Event) {
 			st.CurrentRow = len(st.TextBuffer) - 1
 		}
 		adjustCursorColToLineEnd(st)
+	default:
+		log.Printf("Unhandled key press in view mode: %+v\n", keyEvent)
 	}
 	utils.ScrollTextBuffer(st)
 	log.Println("View mode key press handled.")
@@ -184,6 +190,8 @@ func handleEditModeKeyPress(es *EditorState, keyEvent termbox.Event) {
 	case termbox.KeyBackspace, termbox.KeyBackspace2:
 		es.DeleteRune()
 		st.Modified = true
+	default:
+		log.Printf("Unhandled key press in edit mode: %+v\n", keyEvent)
 	}
 
 	if keyEvent.Ch != 0 {
