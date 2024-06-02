@@ -1,359 +1,94 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"log"
 	"os"
-	"strconv"
-	"strings"
+	"time"
 
-	"github.com/mattn/go-runewidth"
+	"github.com/arthurlch/cub/cmd/pkg/editor"
+	"github.com/arthurlch/cub/cmd/pkg/state"
+	"github.com/arthurlch/cub/cmd/pkg/ui"
+	"github.com/arthurlch/cub/cmd/pkg/utils"
 	"github.com/nsf/termbox-go"
 )
 
-const (
-	ViewMode = iota 
-	EditMode
-)
-
-var mode int
-var ROWS, COLS int
-var offsetRow, offsetCol int 
-var currentRow, currentCol int
-var source_file string
-var text_buffer = [][]rune{}
-var undo_buffer = [][]rune{}
-var copy_buffer = [][]rune{} 
-var modified bool
-var quitKey termbox.Key
-
-func read_file (filename string) {
-	file, err := os.Open(filename)
-
-	if err != nil {
-		source_file = filename
-		text_buffer = append(text_buffer, []rune{}); return  
-	}
-	defer file.Close() 
-	scanner := bufio.NewScanner(file) 
-	lineNumber := 0 
-
-	for scanner.Scan() {
-		line := scanner.Text() 
-		text_buffer = append(text_buffer, []rune{})
-		for i := 0; i < len(line); i++ {
-			text_buffer[lineNumber] = append(text_buffer[lineNumber], rune(line[i])) 
-		}
-		lineNumber++
-	}
-	if lineNumber == 0 {
-		text_buffer = append(text_buffer, []rune{})
-	}
-}
-
-
-func display_text_buffer() {
-	 var row, col int 
-	 for row = 0; row < ROWS; row++ {
-		text_buffer_row := row + offsetRow		
-		for col = 0; col < COLS; col++ {
-			text_buffer_col := col + offsetCol
-			if text_buffer_row >= 0 && text_buffer_row < len(text_buffer) && text_buffer_col < len(text_buffer[text_buffer_row]) {
-				if text_buffer[text_buffer_row][text_buffer_col] != '\t' {
-					termbox.SetChar(col, row, text_buffer[text_buffer_row][text_buffer_col])
-				} else { 
-					termbox.SetCell(col, row, rune(' '), termbox.ColorDefault, termbox.ColorDefault) 
-				} 
-			} else if row+offsetCol > len(text_buffer) {
-				termbox.SetCell(0, row, rune('*'), termbox.ColorLightMagenta, termbox.ColorDefault)
-				termbox.SetChar(col, row, rune('\n'))
-			}
-		}
-	}
-}
-
-func scroll_text_buffer() {
-	if currentRow < offsetRow {
-			offsetRow = currentRow
-	}
-
-	if currentRow >= offsetRow + ROWS {
-		offsetRow = currentRow - ROWS + 1
-	}
-
-	if currentCol < offsetCol {
-			offsetCol = currentCol
-	}
-
-	if currentCol >= offsetCol + COLS {
-			offsetCol = currentCol - COLS + 1
-			if offsetCol < 0 {
-					offsetCol = 0
-			}
-	}
-}
-
-
-func display_status_bar() {
-	var mode_status string 
-	var file_status string
-	var copy_status string 
-	var undo_status string 
-	var cursor_status string
-
-	filename_len := len(source_file) 
-
-	if filename_len > 14 {
-		filename_len = 14
-	} 
-
-	file_status = source_file[:filename_len] + " - " + strconv.Itoa(len(text_buffer)) + " lines "
-	if modified {
-		file_status += " modified " 
-	} else {
-		file_status += " saved "
-	}
-
-	if mode == ViewMode {
-		mode_status = "VIEW: "
-	} else {
-			mode_status = "EDIT: "
-	}
-
-	cursor_status = "Row " + strconv.Itoa(currentRow + 1) + " Col " + strconv.Itoa(currentCol) + " "
-
-	if (len(copy_buffer ) > 0) {
-		copy_status = "[copy]" 
-	} 
-
-	if len(undo_buffer) > 0 {
-		undo_status = "[undo]"
-	}
-
-	used_space := len(mode_status) + len(cursor_status) + len(copy_status) + len(file_status) + len(undo_status)
-	spaces := strings.Repeat(" ", COLS - used_space)
-	message := mode_status + file_status + copy_status + undo_status + spaces + cursor_status
-	print_message(0, ROWS, termbox.ColorBlack, termbox.ColorWhite, message)
-}
-
-func get_key() termbox.Event {
-	var key_event termbox.Event 
-	switch event := termbox.PollEvent(); event.Type {
-		case termbox.EventKey: key_event = event
-		case termbox.EventError: panic(event.Err)
-	} 
-	return key_event
-}
-
-func process_keypress() {
-	key_event := get_key()
-	if key_event.Key == termbox.KeyEsc {
-			mode = ViewMode
-			quitKey = termbox.KeyEsc
-			return
-	}
-
-	if quitKey == termbox.KeyEsc && key_event.Ch == 'q' {
-			termbox.Close()
-			os.Exit(0)
-	} else {
-			quitKey = 0
-	}
-
-	if key_event.Ch == 'e' {
-			mode = EditMode
-			return
-	}
-
-	if mode == ViewMode {
-			switch key_event.Key {
-			case termbox.KeyArrowUp:
-					if currentRow != 0 {
-							currentRow--
-					}
-			case termbox.KeyArrowDown:
-					if currentRow < len(text_buffer)-1 {
-							currentRow++
-					}
-			case termbox.KeyArrowLeft:
-					if currentCol != 0 {
-							currentCol--
-					} else if currentRow > 0 {
-							currentRow--
-							currentCol = len(text_buffer[currentRow])
-					}
-			case termbox.KeyArrowRight:
-					if currentCol < len(text_buffer[currentRow]) {
-							currentCol++
-					} else if currentRow < len(text_buffer)-1 {
-							currentRow++
-							currentCol = 0
-					}
-			case termbox.KeyHome:
-					currentCol = 0
-			case termbox.KeyEnd:
-					currentCol = len(text_buffer[currentRow])
-			case termbox.KeyPgup:
-					if currentRow-int(ROWS/4) > 0 {
-							currentRow -= int(ROWS / 4)
-					}
-			case termbox.KeyPgdn:
-					if currentRow+int(ROWS/4) < len(text_buffer)-1 {
-							currentRow += int(ROWS / 4)
-					}
-			}
-			scroll_text_buffer()
-	} else if mode == EditMode {
-			if key_event.Ch != 0 {
-					if currentRow >= len(text_buffer) {
-							return
-					}
-					insert_runes(key_event)
-					modified = true
-			} else {
-					switch key_event.Key {
-					case termbox.KeyEnter:
-							insert_new_line()
-							modified = true
-					case termbox.KeyArrowUp:
-							if currentRow != 0 {
-									currentRow--
-							}
-					case termbox.KeyArrowDown:
-							if currentRow < len(text_buffer)-1 {
-									currentRow++
-							}
-					case termbox.KeyArrowLeft:
-							if currentCol != 0 {
-									currentCol--
-							} else if currentRow > 0 {
-									currentRow--
-									currentCol = len(text_buffer[currentRow])
-							}
-					case termbox.KeyArrowRight:
-							if currentCol < len(text_buffer[currentRow]) {
-									currentCol++
-							} else if currentRow < len(text_buffer)-1 {
-									currentRow++
-									currentCol = 0
-							}
-					case termbox.KeyHome:
-							currentCol = 0
-					case termbox.KeyEnd:
-							currentCol = len(text_buffer[currentRow])
-					case termbox.KeyPgup:
-							if currentRow-int(ROWS/4) > 0 {
-									currentRow -= int(ROWS / 4)
-							}
-					case termbox.KeyPgdn:
-							if currentRow+int(ROWS/4) < len(text_buffer)-1 {
-									currentRow += int(ROWS / 4)
-							}
-					case termbox.KeyTab:
-							for i := 0; i < 4; i++ {
-									insert_runes(key_event)
-							}
-							modified = true
-					case termbox.KeySpace:
-							insert_runes(key_event)
-							modified = true
-					case termbox.KeyBackspace:
-							delete_rune()
-							modified = true
-					case termbox.KeyBackspace2:
-							delete_rune()
-							modified = true
-					}
-
-					if currentCol > len(text_buffer[currentRow]) {
-							currentCol = len(text_buffer[currentRow])
-					}
-			}
-			scroll_text_buffer()
-	}
-}
-func insert_runes(event termbox.Event) {
-	if currentRow >= len(text_buffer) {
-			return
-	}
-
-	newRow := make([]rune, len(text_buffer[currentRow]) + 1)
-	copy(newRow, text_buffer[currentRow][:currentCol])
-
-	if event.Key == termbox.KeySpace {
-			newRow[currentCol] = ' '
-	} else if event.Key == termbox.KeyTab {
-			newRow[currentCol] = ' '
-	} else {
-			newRow[currentCol] = event.Ch
-	}
-
-	copy(newRow[currentCol+1:], text_buffer[currentRow][currentCol:])
-	text_buffer[currentRow] = newRow
-	currentCol++
-}
-
-func delete_rune() {
-	if currentCol > 0 && currentRow < len(text_buffer) {
-		currentCol--
-		text_buffer[currentRow] = append(text_buffer[currentRow][:currentCol], text_buffer[currentRow][currentCol+1:]...)
-	} else if currentRow > 0 {
-		prevLineLen := len(text_buffer[currentRow-1])
-		text_buffer[currentRow-1] = append(text_buffer[currentRow-1], text_buffer[currentRow]...)
-		text_buffer = append(text_buffer[:currentRow], text_buffer[currentRow+1:]...)
-		currentRow--
-		currentCol = prevLineLen
-	}
-}
-
-func insert_new_line() {
-	if currentRow >= len(text_buffer) {
-			return
-	}
-	beforeCursor := text_buffer[currentRow][:currentCol]
-	afterCursor := make([]rune, len(text_buffer[currentRow][currentCol:]))
-	copy(afterCursor, text_buffer[currentRow][currentCol:])
-
-	text_buffer[currentRow] = beforeCursor
-
-	if currentRow+1 < len(text_buffer) {
-			text_buffer = append(text_buffer[:currentRow+1], append([][]rune{afterCursor}, text_buffer[currentRow+1:]...)...)
-	} else {
-			text_buffer = append(text_buffer, afterCursor)
-	}
-
-	currentRow++
-	currentCol = 0
-}
-
-func print_message(col, row int, forground, background termbox.Attribute, message string) {
-	for _, ch := range message {
-		termbox.SetCell(col, row, ch, forground, background)
-		col += runewidth.RuneWidth(ch)
-	}
-}
-func run_text_editor() {
+func runTextEditor() {
+	log.Println("Initializing termbox...")
 	err := termbox.Init()
-	if err != nil {fmt.Println(err); os.Exit(1) } 
-	if len(os.Args) > 1 {
-		source_file = os.Args[1]
-		read_file(source_file) 
-	} else {
-		text_buffer = append(text_buffer, []rune{})
+	if err != nil {
+		ui.ShowErrorMessage(fmt.Sprintf("Failed to initialize termbox: %v", err))
+		os.Exit(1)
 	}
+	defer termbox.Close()
+
+	sharedState := &state.State{}
+	quitChan := make(chan struct{})
+	editorState := editor.NewEditorState(sharedState)
+	uiState := ui.NewEditorState(sharedState)
+
+	if len(os.Args) > 1 {
+		err := editorState.ReadFile(os.Args[1])
+		if err != nil {
+			ui.ShowErrorMessage(fmt.Sprintf("Failed to read file: %v", err))
+			termbox.Flush()
+			return
+		}
+	} else {
+		sharedState.TextBuffer = append(sharedState.TextBuffer, []rune{})
+	}
+
+	log.Println("Entering main loop...")
+	go handleEvents(editorState, quitChan)
+	mainLoop(sharedState, uiState, editorState, quitChan)
+}
+
+func mainLoop(sharedState *state.State, uiState *ui.EditorState, editorState *editor.EditorState, quitChan chan struct{}) {
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
 	for {
-		COLS, ROWS = termbox.Size(); ROWS --
-		if COLS < 78 { COLS = 78 }
-		termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-		scroll_text_buffer()
-		display_text_buffer()
-		display_status_bar()
-		termbox.SetCursor(currentCol - offsetCol, currentRow - offsetRow)
-		termbox.Flush()
-		process_keypress()
+		select {
+		case <-quitChan:
+			log.Println("Quitting main loop.")
+			return
+		case <-ticker.C:
+			sharedState.Cols, sharedState.Rows = termbox.Size()
+			sharedState.Rows--
+			if sharedState.Cols < 78 {
+				sharedState.Cols = 78
+			}
+			termbox.Clear(ui.ColorBackground, ui.ColorBackground)
+			utils.ScrollTextBuffer(sharedState)
+			utils.DisplayTextBuffer(sharedState)
+			uiState.StatusBar()
+			termbox.SetCursor(sharedState.CurrentCol-sharedState.OffsetCol, sharedState.CurrentRow-sharedState.OffsetRow)
+			termbox.Flush()
+		}
 	}
 }
- 
-func main () {
-	run_text_editor()
+
+func handleEvents(editorState *editor.EditorState, quitChan chan struct{}) {
+	for {
+		select {
+		case <-quitChan:
+			log.Println("Stopping event handler.")
+			return
+		default:
+			editorState.ProcessKeyPress()
+		}
+	}
+}
+
+func main() {
+	logFile, err := os.OpenFile("editor.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println("Failed to open log file:", err)
+		return
+	}
+	defer logFile.Close()
+
+	log.SetOutput(logFile)
+
+	runTextEditor()
 }
