@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/mattn/go-runewidth"
@@ -22,22 +23,24 @@ func (es *EditorState) StatusBar() {
 	if len(filename) > 14 {
 		filename = filename[:14]
 	}
-	fileStatus := fmt.Sprintf("%s - %d lines", filename, len(st.TextBuffer))
+	fileStatus := fmt.Sprintf("%s - lines %d", filename, len(st.TextBuffer))
 	if st.Modified {
-		fileStatus += " modified"
+		fileStatus += " --modified-- "
 	} else {
-		fileStatus += " saved"
+		fileStatus += " --saved-- "
 	}
 
-	modeStatus := "VIEW: "
+	modeStatus := " VIEW "
 	if st.Mode == state.EditMode {
-		modeStatus = "EDIT: "
+		modeStatus = " EDIT "
 	}
 
-	cursorStatus := fmt.Sprintf("Row %d Col %d ", st.CurrentRow+1, st.CurrentCol)
-	statusBar := modeStatus + fileStatus + cursorStatus
-	termbox.SetCursor(0, st.Rows)
-	printMessage(0, st.Rows, termbox.ColorBlack, termbox.ColorWhite, statusBar)
+	cursorStatus := fmt.Sprintf("Row %d Col %d", st.CurrentRow+1, st.CurrentCol+1)
+	statusBar := fmt.Sprintf("%s %s %s", modeStatus, fileStatus, cursorStatus)
+
+	fullWidthStatusBar := statusBar + strings.Repeat(" ", st.Cols-len(statusBar))
+
+	printMessage(0, st.Rows, termbox.ColorBlack, termbox.ColorWhite, fullWidthStatusBar)
 }
 
 func printMessage(col, row int, foreground, background termbox.Attribute, message string) {
