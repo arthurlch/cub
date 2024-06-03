@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/nsf/termbox-go"
@@ -18,7 +19,6 @@ func NewEditorState(sharedState *state.State) *EditorState {
 		log.Println("Shared state is nil, creating a new state.")
 		sharedState = &state.State{}
 	}
-	sharedState.StopBlink = make(chan struct{}, 1)
 	return &EditorState{State: sharedState}
 }
 
@@ -29,7 +29,7 @@ func (es *EditorState) ReadFile(filename string) error {
 		st = &state.State{}
 		es.State = st
 	}
-	
+
 	file, err := os.Open(filename)
 	if err != nil {
 		st.SourceFile = filename
@@ -39,26 +39,35 @@ func (es *EditorState) ReadFile(filename string) error {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	lineNumber := 0
-
 	for scanner.Scan() {
 		line := scanner.Text()
-		st.TextBuffer = append(st.TextBuffer, []rune{})
-		for i := 0; i < len(line); i++ {
-			st.TextBuffer[lineNumber] = append(st.TextBuffer[lineNumber], rune(line[i]))
-		}
-		lineNumber++
+		st.TextBuffer = append(st.TextBuffer, []rune(line))
 	}
-	if lineNumber == 0 {
+	if len(st.TextBuffer) == 0 {
 		st.TextBuffer = append(st.TextBuffer, []rune{})
 	}
+	st.SourceFile = filename
 	return scanner.Err()
 }
 
-func (es *EditorState) SaveFile(filename string) error {
+func (es *EditorState) SaveFile() error {
 	st := es.State
 	if st == nil {
 		return os.ErrInvalid
+	}
+
+	filename := st.SourceFile
+	if filename == "" {
+		filename = "untitled.txt"
+		st.SourceFile = filename
+	}
+
+	// Ensure the directory exists
+	dir := filepath.Dir(filename)
+	if dir != "." {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return err
+		}
 	}
 
 	file, err := os.Create(filename)
@@ -131,8 +140,7 @@ func (es *EditorState) InsertNewLine() {
 		return
 	}
 	beforeCursor := st.TextBuffer[st.CurrentRow][:st.CurrentCol]
-	afterCursor := make([]rune, len(st.TextBuffer[st.CurrentRow][st.CurrentCol:]))
-	copy(afterCursor, st.TextBuffer[st.CurrentRow][st.CurrentCol:])
+	afterCursor := st.TextBuffer[st.CurrentRow][st.CurrentCol:]
 
 	st.TextBuffer[st.CurrentRow] = beforeCursor
 

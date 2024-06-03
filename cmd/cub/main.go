@@ -28,14 +28,17 @@ func runTextEditor() {
 	uiState := ui.NewEditorState(sharedState)
 
 	if len(os.Args) > 1 {
-		err := editorState.ReadFile(os.Args[1])
+		filename := os.Args[1]
+		err := editorState.ReadFile(filename)
 		if err != nil {
 			ui.ShowErrorMessage(fmt.Sprintf("Failed to read file: %v", err))
 			termbox.Flush()
 			return
 		}
+		sharedState.SourceFile = filename
 	} else {
 		sharedState.TextBuffer = append(sharedState.TextBuffer, []rune{})
+		sharedState.SourceFile = "untitled.txt"
 	}
 
 	log.Println("Entering main loop...")
@@ -64,6 +67,11 @@ func mainLoop(sharedState *state.State, uiState *ui.EditorState, editorState *ed
 			uiState.StatusBar()
 			termbox.SetCursor(sharedState.CurrentCol-sharedState.OffsetCol, sharedState.CurrentRow-sharedState.OffsetRow)
 			termbox.Flush()
+
+			// Clear message after 2 seconds
+			if time.Since(sharedState.MessageTime) > 2*time.Second {
+				sharedState.Message = ""
+			}
 		}
 	}
 }

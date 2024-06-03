@@ -1,23 +1,29 @@
 package ui
 
 import (
-	"strings"
+	"time"
 
 	"github.com/nsf/termbox-go"
 )
 
+
 func ShowErrorMessage(message string) {
-	width, _ := termbox.Size()
-	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-
-	lines := strings.Split(message, "\n")
-
-	for y, line := range lines {
-		startCol := (width - len(line)) / 2
-		for i, ch := range line {
-			termbox.SetCell(startCol+i, y, ch, termbox.ColorRed, termbox.ColorBlack)
-		}
-	}
-
+	termbox.Clear(termbox.ColorRed, termbox.ColorDefault)
+	printMessage(0, 0, termbox.ColorWhite, termbox.ColorRed, message)
 	termbox.Flush()
+	time.Sleep(2 * time.Second)
+}
+
+func ShowSuccessMessage(message string) {
+	termbox.Clear(termbox.ColorGreen, termbox.ColorDefault)
+	printMessage(0, 0, termbox.ColorWhite, termbox.ColorGreen, message)
+	termbox.Flush()
+	time.Sleep(2 * time.Second)
+}
+
+func ShowTransientMessage(message string, duration time.Duration) {
+	termbox.Clear(termbox.ColorYellow, termbox.ColorDefault)
+	printMessage(0, 0, termbox.ColorBlack, termbox.ColorYellow, message)
+	termbox.Flush()
+	time.Sleep(duration)
 }
