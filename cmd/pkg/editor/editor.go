@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/nsf/termbox-go"
@@ -28,7 +29,7 @@ func (es *EditorState) ReadFile(filename string) error {
 		st = &state.State{}
 		es.State = st
 	}
-	
+
 	file, err := os.Open(filename)
 	if err != nil {
 		st.SourceFile = filename
@@ -45,13 +46,28 @@ func (es *EditorState) ReadFile(filename string) error {
 	if len(st.TextBuffer) == 0 {
 		st.TextBuffer = append(st.TextBuffer, []rune{})
 	}
+	st.SourceFile = filename
 	return scanner.Err()
 }
 
-func (es *EditorState) SaveFile(filename string) error {
+func (es *EditorState) SaveFile() error {
 	st := es.State
 	if st == nil {
 		return os.ErrInvalid
+	}
+
+	filename := st.SourceFile
+	if filename == "" {
+		filename = "untitled.txt"
+		st.SourceFile = filename
+	}
+
+	// Ensure the directory exists
+	dir := filepath.Dir(filename)
+	if dir != "." {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return err
+		}
 	}
 
 	file, err := os.Create(filename)

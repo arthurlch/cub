@@ -1,6 +1,10 @@
 package state
 
-import "github.com/nsf/termbox-go"
+import (
+	"time"
+
+	"github.com/nsf/termbox-go"
+)
 
 type Mode int
 
@@ -24,4 +28,6 @@ type State struct {
 	QuitKey     termbox.Key
 	Blink       bool
 	StopBlink   chan struct{}
+	Message     string
+	MessageTime time.Time
 }
