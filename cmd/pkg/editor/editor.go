@@ -18,7 +18,6 @@ func NewEditorState(sharedState *state.State) *EditorState {
 		log.Println("Shared state is nil, creating a new state.")
 		sharedState = &state.State{}
 	}
-	sharedState.StopBlink = make(chan struct{}, 1)
 	return &EditorState{State: sharedState}
 }
 
@@ -39,17 +38,11 @@ func (es *EditorState) ReadFile(filename string) error {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	lineNumber := 0
-
 	for scanner.Scan() {
 		line := scanner.Text()
-		st.TextBuffer = append(st.TextBuffer, []rune{})
-		for i := 0; i < len(line); i++ {
-			st.TextBuffer[lineNumber] = append(st.TextBuffer[lineNumber], rune(line[i]))
-		}
-		lineNumber++
+		st.TextBuffer = append(st.TextBuffer, []rune(line))
 	}
-	if lineNumber == 0 {
+	if len(st.TextBuffer) == 0 {
 		st.TextBuffer = append(st.TextBuffer, []rune{})
 	}
 	return scanner.Err()
@@ -131,8 +124,7 @@ func (es *EditorState) InsertNewLine() {
 		return
 	}
 	beforeCursor := st.TextBuffer[st.CurrentRow][:st.CurrentCol]
-	afterCursor := make([]rune, len(st.TextBuffer[st.CurrentRow][st.CurrentCol:]))
-	copy(afterCursor, st.TextBuffer[st.CurrentRow][st.CurrentCol:])
+	afterCursor := st.TextBuffer[st.CurrentRow][st.CurrentCol:]
 
 	st.TextBuffer[st.CurrentRow] = beforeCursor
 

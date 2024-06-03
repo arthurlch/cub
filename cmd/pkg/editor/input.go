@@ -36,7 +36,6 @@ func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 		if st.Mode == state.EditMode {
 			st.Mode = state.ViewMode
 			st.QuitKey = termbox.KeyEsc
-			st.StopBlink <- struct{}{}
 			termbox.SetCursor(st.CurrentCol-st.OffsetCol, st.CurrentRow-st.OffsetRow)
 			termbox.Flush()
 			log.Println("Switched to view mode.")
@@ -45,7 +44,6 @@ func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 	}
 
 	if st.QuitKey == termbox.KeyEsc && keyEvent.Ch == 'q' {
-		close(st.StopBlink)
 		termbox.Close()
 		log.Println("Quitting editor.")
 		os.Exit(0)
@@ -55,7 +53,6 @@ func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 
 	if keyEvent.Ch == 'e' && st.Mode == state.ViewMode {
 		st.Mode = state.EditMode
-		go es.blinkCursor()
 		log.Println("Switched to edit mode.")
 		return
 	}
