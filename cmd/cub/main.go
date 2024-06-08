@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/arthurlch/cub/cmd/pkg/editor"
 	"github.com/arthurlch/cub/cmd/pkg/state"
@@ -17,74 +16,46 @@ func runTextEditor() {
 	log.Println("Initializing termbox...")
 	err := termbox.Init()
 	if err != nil {
-		ui.ShowErrorMessage(fmt.Sprintf("Failed to initialize termbox: %v", err))
+		ui.ShowErrorMessage(&state.State{}, fmt.Sprintf("Failed to initialize termbox: %v", err))
 		os.Exit(1)
 	}
 	defer termbox.Close()
 
 	sharedState := &state.State{}
-	quitChan := make(chan struct{})
 	editorState := editor.NewEditorState(sharedState)
 	uiState := ui.NewEditorState(sharedState)
 
 	if len(os.Args) > 1 {
-		filename := os.Args[1]
-		err := editorState.ReadFile(filename)
+		err := editorState.ReadFile(os.Args[1])
 		if err != nil {
-			ui.ShowErrorMessage(fmt.Sprintf("Failed to read file: %v", err))
+			ui.ShowErrorMessage(sharedState, fmt.Sprintf("Failed to read file: %v", err))
 			termbox.Flush()
 			return
 		}
-		sharedState.SourceFile = filename
 	} else {
 		sharedState.TextBuffer = append(sharedState.TextBuffer, []rune{})
-		sharedState.SourceFile = "untitled.txt"
 	}
 
 	log.Println("Entering main loop...")
-	go handleEvents(editorState, quitChan)
-	mainLoop(sharedState, uiState, editorState, quitChan)
+	mainLoop(sharedState, uiState, editorState)
 }
 
-func mainLoop(sharedState *state.State, uiState *ui.EditorState, editorState *editor.EditorState, quitChan chan struct{}) {
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
-
+func mainLoop(sharedState *state.State, uiState *ui.EditorState, editorState *editor.EditorState) {
 	for {
-		select {
-		case <-quitChan:
-			log.Println("Quitting main loop.")
-			return
-		case <-ticker.C:
-			sharedState.Cols, sharedState.Rows = termbox.Size()
-			sharedState.Rows--
-			if sharedState.Cols < 78 {
-				sharedState.Cols = 78
-			}
-			termbox.Clear(ui.ColorBackground, ui.ColorBackground)
-			utils.ScrollTextBuffer(sharedState)
-			utils.DisplayTextBuffer(sharedState)
-			uiState.StatusBar()
-			termbox.SetCursor(sharedState.CurrentCol-sharedState.OffsetCol, sharedState.CurrentRow-sharedState.OffsetRow)
-			termbox.Flush()
-
-			// Clear message after 2 seconds
-			if time.Since(sharedState.MessageTime) > 2*time.Second {
-				sharedState.Message = ""
-			}
+		sharedState.Cols, sharedState.Rows = termbox.Size()
+		sharedState.Rows--
+		if sharedState.Cols < 78 {
+			sharedState.Cols = 78
 		}
-	}
-}
+		termbox.Clear(ui.ColorBackground, ui.ColorBackground)
+		utils.ScrollTextBuffer(sharedState)
+		utils.DisplayTextBuffer(sharedState)
+		uiState.StatusBar()
+		termbox.SetCursor(sharedState.CurrentCol-sharedState.OffsetCol, sharedState.CurrentRow-sharedState.OffsetRow)
+		termbox.Flush()
 
-func handleEvents(editorState *editor.EditorState, quitChan chan struct{}) {
-	for {
-		select {
-		case <-quitChan:
-			log.Println("Stopping event handler.")
-			return
-		default:
-			editorState.ProcessKeyPress()
-		}
+		// Process key press
+		editorState.ProcessKeyPress()
 	}
 }
 

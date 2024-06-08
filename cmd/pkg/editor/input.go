@@ -60,9 +60,9 @@ func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 	if keyEvent.Key == termbox.KeyCtrlS {
 		log.Println("Saving file...")
 		if err := es.SaveFile(); err != nil {
-			ui.ShowErrorMessage("Failed to save file: " + err.Error())
+			ui.ShowErrorMessage(st, "Failed to save file: "+err.Error())
 		} else {
-			ui.ShowSuccessMessage("File saved successfully.")
+			ui.ShowSuccessMessage(st, "File saved successfully.")
 		}
 		return
 	}

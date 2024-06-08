@@ -62,7 +62,7 @@ func (es *EditorState) SaveFile() error {
 		st.SourceFile = filename
 	}
 
-	// Ensure the directory exists
+	// Ensure the directory exists!!
 	dir := filepath.Dir(filename)
 	if dir != "." {
 		if err := os.MkdirAll(dir, 0755); err != nil {
