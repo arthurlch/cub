@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/mattn/go-runewidth"
@@ -37,6 +38,10 @@ func (es *EditorState) StatusBar() {
 
 	cursorStatus := fmt.Sprintf("Row %d Col %d", st.CurrentRow+1, st.CurrentCol)
 	statusBar := fmt.Sprintf("%s %s %s", modeStatus, fileStatus, cursorStatus)
+
+	if time.Since(st.MessageTimestamp) < 5*time.Second {
+		statusBar += " | " + st.ErrorMessage
+	}
 
 	fullWidthStatusBar := statusBar + strings.Repeat(" ", st.Cols-len(statusBar))
 

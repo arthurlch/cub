@@ -26,8 +26,6 @@ type State struct {
 	CopyBuffer  [][]rune
 	Modified    bool
 	QuitKey     termbox.Key
-	Blink       bool
-	StopBlink   chan struct{}
-	Message     string
-	MessageTime time.Time
+	ErrorMessage string
+	MessageTimestamp time.Time
 }
