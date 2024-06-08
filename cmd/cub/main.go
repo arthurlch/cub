@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/arthurlch/cub/cmd/pkg/editor"
@@ -13,7 +12,6 @@ import (
 )
 
 func runTextEditor() {
-	log.Println("Initializing termbox...")
 	err := termbox.Init()
 	if err != nil {
 		ui.ShowErrorMessage(&state.State{}, fmt.Sprintf("Failed to initialize termbox: %v", err))
@@ -36,38 +34,38 @@ func runTextEditor() {
 		sharedState.TextBuffer = append(sharedState.TextBuffer, []rune{})
 	}
 
-	log.Println("Entering main loop...")
 	mainLoop(sharedState, uiState, editorState)
 }
 
 func mainLoop(sharedState *state.State, uiState *ui.EditorState, editorState *editor.EditorState) {
+	var prevCols, prevRows int
+
 	for {
-		sharedState.Cols, sharedState.Rows = termbox.Size()
-		sharedState.Rows--
-		if sharedState.Cols < 78 {
-			sharedState.Cols = 78
+		cols, rows := termbox.Size()
+		if cols != prevCols || rows != prevRows {
+			sharedState.Cols, sharedState.Rows = cols, rows-1
+			if sharedState.Cols < 78 {
+				sharedState.Cols = 78
+			}
+			prevCols, prevRows = cols, rows
+			redraw(sharedState, uiState)
 		}
-		termbox.Clear(ui.ColorBackground, ui.ColorBackground)
-		utils.ScrollTextBuffer(sharedState)
-		utils.DisplayTextBuffer(sharedState)
-		uiState.StatusBar()
-		termbox.SetCursor(sharedState.CurrentCol-sharedState.OffsetCol, sharedState.CurrentRow-sharedState.OffsetRow)
-		termbox.Flush()
 
 		// Process key press
 		editorState.ProcessKeyPress()
+		redraw(sharedState, uiState)
 	}
 }
 
+func redraw(sharedState *state.State, uiState *ui.EditorState) {
+	termbox.Clear(ui.ColorBackground, termbox.ColorDefault) // Clearing with background color
+	utils.ScrollTextBuffer(sharedState)
+	utils.DisplayTextBuffer(sharedState)
+	uiState.StatusBar()
+	termbox.SetCursor(sharedState.CurrentCol-sharedState.OffsetCol, sharedState.CurrentRow-sharedState.OffsetRow)
+	termbox.Flush()
+}
+
 func main() {
-	logFile, err := os.OpenFile("editor.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		fmt.Println("Failed to open log file:", err)
-		return
-	}
-	defer logFile.Close()
-
-	log.SetOutput(logFile)
-
 	runTextEditor()
 }
