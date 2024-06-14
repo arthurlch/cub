@@ -18,6 +18,7 @@ func NewEditorState(sharedState *state.State) *EditorState {
 	return &EditorState{State: sharedState}
 }
 
+
 func (es *EditorState) StatusBar() {
 	st := es.State
 	filename := st.SourceFile

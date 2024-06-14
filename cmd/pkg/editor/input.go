@@ -58,6 +58,36 @@ func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 		return
 	}
 
+	if keyEvent.Key == termbox.KeyCtrlK {
+		startSelection(st, state.LineSelection)
+		return
+	}
+
+	if keyEvent.Key == termbox.KeyCtrlL {
+		startSelection(st, state.WordSelection)
+		return
+	}
+
+	if keyEvent.Key == termbox.KeyCtrlJ {
+		endSelection(st)
+		return
+	}
+
+	if keyEvent.Key == termbox.KeyCtrlC {
+		copySelection(st)
+		return
+	}
+
+	if keyEvent.Key == termbox.KeyCtrlX {
+		cutSelection(st)
+		return
+	}
+
+	if keyEvent.Key == termbox.KeyCtrlV {
+		pasteSelection(st)
+		return
+	}
+	
 	switch st.Mode {
 	case state.ViewMode:
 		handleViewModeKeyPress(st, keyEvent)
@@ -71,19 +101,19 @@ func handleViewModeKeyPress(st *state.State, keyEvent termbox.Event) {
 	case termbox.KeyArrowUp:
 		if st.CurrentRow > 0 {
 			st.CurrentRow--
-			adjustCursorColToLineEnd(st)
 		}
 	case termbox.KeyArrowDown:
 		if st.CurrentRow < len(st.TextBuffer)-1 {
 			st.CurrentRow++
-			adjustCursorColToLineEnd(st)
 		}
 	case termbox.KeyArrowLeft:
 		if st.CurrentCol > 0 {
 			st.CurrentCol--
 		} else if st.CurrentRow > 0 {
 			st.CurrentRow--
-			st.CurrentCol = len(st.TextBuffer[st.CurrentRow])
+			if st.CurrentRow < len(st.TextBuffer) {
+				st.CurrentCol = len(st.TextBuffer[st.CurrentRow])
+			}
 		}
 	case termbox.KeyArrowRight:
 		if st.CurrentCol < len(st.TextBuffer[st.CurrentRow]) {
@@ -102,20 +132,24 @@ func handleViewModeKeyPress(st *state.State, keyEvent termbox.Event) {
 		} else {
 			st.CurrentRow = 0
 		}
-		adjustCursorColToLineEnd(st)
 	case termbox.KeyPgdn:
 		if st.CurrentRow+int(st.Rows/4) < len(st.TextBuffer)-1 {
 			st.CurrentRow += int(st.Rows / 4)
 		} else {
 			st.CurrentRow = len(st.TextBuffer) - 1
 		}
-		adjustCursorColToLineEnd(st)
 	}
+
+	adjustCursorColToLineEnd(st) 
 	utils.ScrollTextBuffer(st)
+
+	utils.LogKeyPress("handleViewModeKeyPress", keyEvent)
+	utils.LogBufferState(st, "ViewMode")
 }
 
 func adjustCursorColToLineEnd(st *state.State) {
 	if st.CurrentCol > len(st.TextBuffer[st.CurrentRow]) {
 		st.CurrentCol = len(st.TextBuffer[st.CurrentRow])
 	}
+	utils.Logger.Printf("adjustCursorColToLineEnd - CurrentRow: %d, CurrentCol: %d\n", st.CurrentRow, st.CurrentCol)
 }

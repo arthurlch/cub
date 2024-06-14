@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/arthurlch/cub/cmd/pkg/editor"
@@ -11,7 +12,19 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
+var logger *log.Logger
+
+func init() {
+	file, err := os.OpenFile("editor.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println("Failed to open log file:", err)
+		os.Exit(1)
+	}
+	logger = log.New(file, "", log.LstdFlags)
+}
+
 func runTextEditor() {
+	utils.InitLogger()
 	err := termbox.Init()
 	if err != nil {
 		ui.ShowErrorMessage(&state.State{}, fmt.Sprintf("Failed to initialize termbox: %v", err))
@@ -58,7 +71,7 @@ func mainLoop(sharedState *state.State, uiState *ui.EditorState, editorState *ed
 }
 
 func redraw(sharedState *state.State, uiState *ui.EditorState) {
-	termbox.Clear(ui.ColorBackground, termbox.ColorDefault) // Clearing with background color
+	termbox.Clear(ui.ColorBackground, termbox.ColorDefault) 
 	utils.ScrollTextBuffer(sharedState)
 	utils.DisplayTextBuffer(sharedState)
 	uiState.StatusBar()
