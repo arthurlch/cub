@@ -13,18 +13,9 @@ const (
 	EditMode
 )
 
-type SelectionMode int
-
-const (
-	NoSelection SelectionMode = iota
-	LineSelection
-	WordSelection
-)
-
 
 type State struct {
 	Mode        Mode
-	SelectionMode  SelectionMode
 	Rows, Cols  int
 	OffsetRow   int
 	OffsetCol   int

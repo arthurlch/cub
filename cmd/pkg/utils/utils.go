@@ -72,7 +72,7 @@ func InitLogger() {
 
 func LogBufferState(st *state.State, context string) {
 	Logger.Printf("%s - Cursor Position - Row: %d, Col: %d", context, st.CurrentRow, st.CurrentCol)
-	Logger.Printf("Mode: %v, SelectionMode: %v", st.Mode, st.SelectionMode)
+	Logger.Printf("Mode: %v, SelectionMode: %v", st.Mode)
 	Logger.Printf("Rows: %d, Cols: %d, OffsetRow: %d, OffsetCol: %d", st.Rows, st.Cols, st.OffsetRow, st.OffsetCol)
 	Logger.Printf("Modified: %v, QuitKey: %v", st.Modified, st.QuitKey)
 }

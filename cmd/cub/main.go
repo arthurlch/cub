@@ -64,7 +64,6 @@ func mainLoop(sharedState *state.State, uiState *ui.EditorState, editorState *ed
 			redraw(sharedState, uiState)
 		}
 
-		// Process key press
 		editorState.ProcessKeyPress()
 		redraw(sharedState, uiState)
 	}
