@@ -8,67 +8,122 @@ import (
 func startSelection(st *state.State) {
 	st.StartRow = st.CurrentRow
 	st.StartCol = st.CurrentCol
-	utils.Logger.Printf("Start selection - StartRow: %d, StartCol: %d\n", st.StartRow, st.StartCol)
+	st.EndRow = st.CurrentRow
+	st.EndCol = st.CurrentCol
+	st.SelectionActive = true
+	utils.Logger.Printf("Selection started - StartRow: %d, StartCol: %d, SelectionActive: %v", 
+		st.StartRow, st.StartCol, st.SelectionActive)
 }
 
 func updateSelection(st *state.State) {
-	utils.Logger.Printf("Update selection - CurrentRow: %d, CurrentCol: %d\n", st.CurrentRow, st.CurrentCol)
+	st.EndRow = st.CurrentRow
+	st.EndCol = st.CurrentCol
+	utils.Logger.Printf("Update selection - EndRow: %d, EndCol: %d\n", st.EndRow, st.EndCol)
 }
 
 func endSelection(st *state.State) {
+	st.SelectionActive = false
 	utils.Logger.Println("End selection")
 }
 
 func copySelection(st *state.State) {
 	copyBuffer := []rune{}
-	for row := st.StartRow; row <= st.CurrentRow; row++ {
+	startRow, endRow := st.StartRow, st.EndRow
+	startCol, endCol := st.StartCol, st.EndCol
+
+	if startRow > endRow || (startRow == endRow && startCol > endCol) {
+		startRow, endRow = endRow, startRow
+		startCol, endCol = endCol, startCol
+	}
+
+	for row := startRow; row <= endRow; row++ {
 		line := st.TextBuffer[row]
-		if row == st.StartRow && row == st.CurrentRow {
-			copyBuffer = append(copyBuffer, line[st.StartCol:st.CurrentCol]...)
-		} else if row == st.StartRow {
-			copyBuffer = append(copyBuffer, line[st.StartCol:]...)
-		} else if row == st.CurrentRow {
-			copyBuffer = append(copyBuffer, line[:st.CurrentCol]...)
+		if row == startRow && row == endRow {
+			copyBuffer = append(copyBuffer, line[startCol:endCol]...)
+		} else if row == startRow {
+			copyBuffer = append(copyBuffer, line[startCol:]...)
+			copyBuffer = append(copyBuffer, '\n')
+		} else if row == endRow {
+			copyBuffer = append(copyBuffer, line[:endCol]...)
 		} else {
 			copyBuffer = append(copyBuffer, line...)
+			copyBuffer = append(copyBuffer, '\n')
 		}
 	}
 	st.CopyBuffer = copyBuffer
-	utils.Logger.Printf("Copy selection - CopyBuffer: %s\n", string(copyBuffer))
+	utils.Logger.Printf("Copy selection - CopyBuffer length: %d", len(st.CopyBuffer))
 }
 
 func cutSelection(st *state.State) {
 	utils.Logger.Println("Cut selection - Start")
 	copySelection(st)
 	newTextBuffer := [][]rune{}
+	startRow, endRow := st.StartRow, st.EndRow
+	startCol, endCol := st.StartCol, st.EndCol
+
+	if startRow > endRow || (startRow == endRow && startCol > endCol) {
+		startRow, endRow = endRow, startRow
+		startCol, endCol = endCol, startCol
+	}
+
 	for row := 0; row < len(st.TextBuffer); row++ {
-		if row < st.StartRow || row > st.CurrentRow {
+		if row < startRow || row > endRow {
 			newTextBuffer = append(newTextBuffer, st.TextBuffer[row])
-		} else {
+		} else if row == startRow && row == endRow {
 			line := st.TextBuffer[row]
-			if row == st.StartRow && row == st.CurrentRow {
-				newTextBuffer = append(newTextBuffer, append(line[:st.StartCol], line[st.CurrentCol:]...))
-			} else if row == st.StartRow {
-				newTextBuffer = append(newTextBuffer, line[:st.StartCol])
-			} else if row == st.CurrentRow {
-				newTextBuffer = append(newTextBuffer, line[st.CurrentCol:])
-			}
+			newLine := append(line[:startCol], line[endCol:]...)
+			newTextBuffer = append(newTextBuffer, newLine)
+		} else if row == startRow {
+			line := st.TextBuffer[row]
+			newTextBuffer = append(newTextBuffer, line[:startCol])
+		} else if row == endRow {
+			line := st.TextBuffer[row]
+			newTextBuffer = append(newTextBuffer, line[endCol:])
 		}
 	}
 	st.TextBuffer = newTextBuffer
+	st.CurrentRow = startRow
+	st.CurrentCol = startCol
 	st.Modified = true
-	utils.Logger.Println("Cut selection - TextBuffer modified")
+	utils.Logger.Printf("Cut selection - Removed text length: %d", len(st.CopyBuffer))
 }
 
 func pasteSelection(st *state.State) {
 	if len(st.CopyBuffer) > 0 {
-		line := st.TextBuffer[st.CurrentRow]
-		before := line[:st.CurrentCol]
-		after := line[st.CurrentCol:]
-		newLine := append(append(before, st.CopyBuffer...), after...)
-		st.TextBuffer[st.CurrentRow] = newLine
+		lines := [][]rune{{}}
+		for _, ch := range st.CopyBuffer {
+			if ch == '\n' {
+				lines = append(lines, []rune{})
+			} else {
+				lines[len(lines)-1] = append(lines[len(lines)-1], ch)
+			}
+		}
+
+		currentLine := st.TextBuffer[st.CurrentRow]
+		before := currentLine[:st.CurrentCol]
+		after := currentLine[st.CurrentCol:]
+
+		newTextBuffer := make([][]rune, 0, len(st.TextBuffer)+len(lines)-1)
+		newTextBuffer = append(newTextBuffer, st.TextBuffer[:st.CurrentRow]...)
+
+		newTextBuffer = append(newTextBuffer, append(before, lines[0]...))
+		for i := 1; i < len(lines); i++ {
+			newTextBuffer = append(newTextBuffer, lines[i])
+		}
+
+		if len(lines) > 1 {
+			newTextBuffer[len(newTextBuffer)-1] = append(newTextBuffer[len(newTextBuffer)-1], after...)
+		} else {
+			newTextBuffer[len(newTextBuffer)-1] = append(newTextBuffer[len(newTextBuffer)-1], after...)
+		}
+
+		newTextBuffer = append(newTextBuffer, st.TextBuffer[st.CurrentRow+1:]...)
+
+		st.TextBuffer = newTextBuffer
+		st.CurrentRow += len(lines) - 1
+		st.CurrentCol = len(newTextBuffer[st.CurrentRow]) - len(after)
 		st.Modified = true
-		utils.Logger.Printf("Paste selection - Pasted text: %s\n", string(st.CopyBuffer))
+		utils.Logger.Printf("Paste selection - Pasted text length: %d", len(st.CopyBuffer))
 	} else {
 		utils.Logger.Println("Paste selection - No text to paste")
 	}

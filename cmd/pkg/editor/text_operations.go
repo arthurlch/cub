@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/nsf/termbox-go"
 )
 
@@ -68,4 +69,18 @@ func (es *EditorState) InsertNewLine() {
 
 	st.CurrentRow++
 	st.CurrentCol = 0
+}
+
+func deleteCurrentLine(st *state.State) {
+	if st.CurrentRow < len(st.TextBuffer) {
+		st.TextBuffer = append(st.TextBuffer[:st.CurrentRow], st.TextBuffer[st.CurrentRow+1:]...)
+		if st.CurrentRow >= len(st.TextBuffer) {
+			st.CurrentRow = len(st.TextBuffer) - 1
+		}
+		if st.CurrentRow < 0 {
+			st.CurrentRow = 0
+		}
+		st.CurrentCol = 0
+		st.Modified = true
+	}
 }

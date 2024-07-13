@@ -21,9 +21,12 @@ type State struct {
 	OffsetCol   int
 	CurrentRow  int
 	CurrentCol  int
-	StartRow       int
-	StartCol       int
+	StartRow    int
+	StartCol    int
+	EndRow      int
+	EndCol 			int
 	SourceFile  string
+	SelectionActive bool
 	TextBuffer  [][]rune
 	UndoBuffer  [][]rune
 	CopyBuffer  []rune
@@ -31,4 +34,5 @@ type State struct {
 	QuitKey     termbox.Key
 	ErrorMessage string
 	MessageTimestamp time.Time
+	LastKey rune
 }
