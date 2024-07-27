@@ -10,7 +10,7 @@ type Mode int
 
 const (
 	ViewMode Mode = iota
-	EditMode
+	InsertMode
 )
 
 

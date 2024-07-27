@@ -5,7 +5,7 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
-func handleEditModeKeyPress(es *EditorState, keyEvent termbox.Event) {
+func handleInsertModeKeyPress(es *EditorState, keyEvent termbox.Event) {
 	st := es.State
 	updateSelection(st)
 

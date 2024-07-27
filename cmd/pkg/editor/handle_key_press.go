@@ -12,22 +12,21 @@ func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 	st := es.State
 
 	if keyEvent.Key == termbox.KeyEsc {
-		if st.Mode == state.EditMode {
+		if st.Mode == state.InsertMode {
 			st.Mode = state.ViewMode
 			st.QuitKey = termbox.KeyEsc
 		}
 		return
 	}
 
-	if st.QuitKey == termbox.KeyEsc && keyEvent.Ch == 'q' {
+	if keyEvent.Key == termbox.KeyCtrlQ {
 		termbox.Close()
 		os.Exit(0)
-	} else {
-		st.QuitKey = 0
 	}
 
-	if keyEvent.Ch == 'e' && st.Mode == state.ViewMode {
-		st.Mode = state.EditMode
+
+	if keyEvent.Ch == 'i' && st.Mode == state.ViewMode {
+		st.Mode = state.InsertMode
 		return
 	}
 
@@ -43,7 +42,7 @@ func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 	switch st.Mode {
 	case state.ViewMode:
 		handleViewModeKeyPress(st, keyEvent)
-	case state.EditMode:
-		handleEditModeKeyPress(es, keyEvent)
+	case state.InsertMode:
+		handleInsertModeKeyPress(es, keyEvent)
 	}
 }
