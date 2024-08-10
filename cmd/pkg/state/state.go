@@ -1,5 +1,15 @@
 package state
 
+/*
+
+This file is holding the state for the whole text editor
+State that is responsible for the buffer is the most important
+Using rune has data structure so we can represent multi dimension word, lines, files.
+Grid is composed of Rows and Columns.
+Current mode for the editor are view and insert modes, choice was made to use iota.
+
+*/
+
 import (
 	"time"
 
@@ -12,6 +22,20 @@ const (
 	ViewMode Mode = iota
 	InsertMode
 )
+
+type ChangeType int
+
+const (
+	Insert ChangeType = iota
+	Delete
+)
+
+type Change struct {
+	Type ChangeType
+	Row, Col  int
+	Text      []rune
+	PrevRow, PrevCol int
+}
 
 
 type State struct {
@@ -28,7 +52,8 @@ type State struct {
 	SourceFile  string
 	SelectionActive bool
 	TextBuffer  [][]rune
-	UndoBuffer  [][]rune
+	UndoBuffer  []Change
+  RedoBuffer  []Change
 	CopyBuffer  []rune
 	Modified    bool
 	QuitKey     termbox.Key

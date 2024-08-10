@@ -32,22 +32,16 @@ func (es *EditorState) InsertRunes(event termbox.Event) {
 
 func (es *EditorState) DeleteRune() {
 	st := es.State
-	if st == nil || st.CurrentRow >= len(st.TextBuffer) {
-		return
-	}
-
-	row := st.TextBuffer[st.CurrentRow]
-	if st.CurrentCol > 0 {
+	if st.CurrentRow < len(st.TextBuffer) && st.CurrentCol > 0 {
+		row := st.TextBuffer[st.CurrentRow]
+		st.TextBuffer[st.CurrentRow] = append(row[:st.CurrentCol-1], row[st.CurrentCol:]...)
 		st.CurrentCol--
-		if len(row) > 0 {
-			st.TextBuffer[st.CurrentRow] = append(row[:st.CurrentCol], row[st.CurrentCol+1:]...)
-		}
-	} else if st.CurrentRow > 0 {
-		prevLineLen := len(st.TextBuffer[st.CurrentRow-1])
-		st.TextBuffer[st.CurrentRow-1] = append(st.TextBuffer[st.CurrentRow-1], row...)
+	} else if st.CurrentCol == 0 && st.CurrentRow > 0 {
+		prevRowLength := len(st.TextBuffer[st.CurrentRow-1])
+		st.CurrentCol = prevRowLength
+		st.TextBuffer[st.CurrentRow-1] = append(st.TextBuffer[st.CurrentRow-1], st.TextBuffer[st.CurrentRow]...)
 		st.TextBuffer = append(st.TextBuffer[:st.CurrentRow], st.TextBuffer[st.CurrentRow+1:]...)
 		st.CurrentRow--
-		st.CurrentCol = prevLineLen
 	}
 }
 

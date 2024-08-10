@@ -24,11 +24,28 @@ func LogBufferState(st *state.State, context string) {
 	Logger.Printf("Rows: %d, Cols: %d, OffsetRow: %d, OffsetCol: %d", st.Rows, st.Cols, st.OffsetRow, st.OffsetCol)
 	Logger.Printf("Modified: %v, QuitKey: %v", st.Modified, st.QuitKey)
 	if st.SelectionActive {
-			Logger.Printf("Selection - StartRow: %d, StartCol: %d, EndRow: %d, EndCol: %d", 
-					st.StartRow, st.StartCol, st.EndRow, st.EndCol)
+		Logger.Printf("Selection - StartRow: %d, StartCol: %d, EndRow: %d, EndCol: %d", 
+			st.StartRow, st.StartCol, st.EndRow, st.EndCol)
 	}
 }
 
 func LogKeyPress(context string, keyEvent termbox.Event) {
 	Logger.Printf("%s - Key: %+v (Ch: %c, Key: %v)", context, keyEvent, keyEvent.Ch, keyEvent.Key)
+}
+
+func LogTextBuffer(buffer [][]rune, context string) {
+	Logger.Printf("%s - TextBuffer contents:", context)
+	for i, row := range buffer {
+		Logger.Printf("Row %d: %s", i, string(row))
+	}
+}
+
+func LogUndoBuffer(buffer [][][]rune, context string) {
+	Logger.Printf("%s - UndoBuffer contents:", context)
+	for i, buf := range buffer {
+		Logger.Printf("Undo %d:", i)
+		for j, row := range buf {
+			Logger.Printf("Row %d: %s", j, string(row))
+		}
+	}
 }

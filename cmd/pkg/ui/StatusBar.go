@@ -34,7 +34,7 @@ func (es *EditorState) StatusBar() {
 
 	modeStatus := " VIEW "
 	if st.Mode == state.InsertMode {
-		modeStatus = " IMSERT "
+		modeStatus = " INSERT "
 	}
 
 	cursorStatus := fmt.Sprintf("Row %d Col %d", st.CurrentRow+1, st.CurrentCol)
