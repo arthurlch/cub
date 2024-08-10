@@ -1,6 +1,6 @@
 # Cub Text Editor
 
-![Cub Logo](https://ibb.co/FzPbQWw)
+![Cub Logo](https://i.ibb.co/qpZMHns/logo-color.png)
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/arthurlch/cub)
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/arthurlch/cub/ci.yml)
