@@ -7,65 +7,69 @@ import (
 )
 
 func handleViewModeKeyPress(st *state.State, keyEvent termbox.Event) {
-	utils.LogKeyPress("handleViewModeKeyPress", keyEvent)
-	utils.Logger.Printf("Current state before key press: SelectionActive=%v, Row=%d, Col=%d", 
-		st.SelectionActive, st.CurrentRow, st.CurrentCol)
 
-	switch {
-	case keyEvent.Key == termbox.KeyArrowUp || keyEvent.Ch == 'o':
-		handleNavigation(st, termbox.Event{Key: termbox.KeyArrowUp})
-	case keyEvent.Key == termbox.KeyArrowDown || keyEvent.Ch == 'p':
-		handleNavigation(st, termbox.Event{Key: termbox.KeyArrowDown})
-	case keyEvent.Key == termbox.KeyArrowLeft || keyEvent.Ch == 'k':
-		handleNavigation(st, termbox.Event{Key: termbox.KeyArrowLeft})
-	case keyEvent.Key == termbox.KeyArrowRight || keyEvent.Ch == 'l':
-		handleNavigation(st, termbox.Event{Key: termbox.KeyArrowRight})
-	case keyEvent.Key == termbox.KeyHome || keyEvent.Key == termbox.KeyEnd || 
-	     keyEvent.Key == termbox.KeyPgup || keyEvent.Key == termbox.KeyPgdn:
-		handleNavigation(st, keyEvent)
-	case keyEvent.Ch == 'z':
-		utils.Logger.Printf("Attempting to start selection")
+	switch keyEvent.Ch {
+	case 'o', 'p', 'k', 'l':
+		handleNavigationAlias(st, keyEvent.Ch)
+	case 'z':
 		startSelection(st)
-	case keyEvent.Ch == 's':
-		utils.Logger.Printf("Attempting to end selection")
+	case 's':
 		endSelection(st)
-	case keyEvent.Ch == 'c':
-		utils.Logger.Printf("Attempting to copy selection")
+	case 'c':
 		copySelection(st)
 		endSelection(st)
-	case keyEvent.Ch == 'x':
-		utils.Logger.Printf("Attempting to cut selection")
+	case 'x':
 		cutSelection(st)
 		endSelection(st)
-	case keyEvent.Ch == 'v':
-		utils.Logger.Printf("Attempting to paste selection")
+	case 'v':
 		pasteSelection(st)
-	case keyEvent.Ch == 'd':
+	case 'd':
 		if st.LastKey == 'd' {
-			utils.Logger.Printf("Attempting to delete current line")
 			deleteCurrentLine(st)
 			st.LastKey = 0
 		} else {
 			st.LastKey = 'd'
 		}
 	default:
-		utils.Logger.Printf("Unhandled key press in view mode: %v", keyEvent)
-		st.LastKey = 0
+		handleSpecialKeys(st, keyEvent)
 	}
 
-	if st.SelectionActive && 
-	   (keyEvent.Key == termbox.KeyArrowUp || keyEvent.Key == termbox.KeyArrowDown || 
-	    keyEvent.Key == termbox.KeyArrowLeft || keyEvent.Key == termbox.KeyArrowRight || 
-	    keyEvent.Key == termbox.KeyHome || keyEvent.Key == termbox.KeyEnd || 
-	    keyEvent.Key == termbox.KeyPgup || keyEvent.Key == termbox.KeyPgdn) {
-		utils.Logger.Printf("Updating selection during navigation")
+	if st.SelectionActive && isNavigationKey(keyEvent) {
 		updateSelection(st)
 	}
 
-	utils.Logger.Printf("Current state after key press: SelectionActive=%v, Row=%d, Col=%d", 
-		st.SelectionActive, st.CurrentRow, st.CurrentCol)
-	
 	adjustCursorColToLineEnd(st)
 	utils.ScrollTextBuffer(st)
-	utils.LogBufferState(st, "ViewMode")
+}
+
+func handleNavigationAlias(st *state.State, ch rune) {
+	switch ch {
+	case 'o':
+		handleNavigation(st, termbox.Event{Key: termbox.KeyArrowUp})
+	case 'p':
+		handleNavigation(st, termbox.Event{Key: termbox.KeyArrowDown})
+	case 'k':
+		handleNavigation(st, termbox.Event{Key: termbox.KeyArrowLeft})
+	case 'l':
+		handleNavigation(st, termbox.Event{Key: termbox.KeyArrowRight})
+	}
+}
+
+func handleSpecialKeys(st *state.State, keyEvent termbox.Event) {
+	switch keyEvent.Key {
+	case termbox.KeyArrowUp, termbox.KeyArrowDown, termbox.KeyArrowLeft, termbox.KeyArrowRight,
+		termbox.KeyHome, termbox.KeyEnd, termbox.KeyPgup, termbox.KeyPgdn:
+		handleNavigation(st, keyEvent)
+	default:
+		st.LastKey = 0
+	}
+}
+
+func isNavigationKey(keyEvent termbox.Event) bool {
+	switch keyEvent.Key {
+	case termbox.KeyArrowUp, termbox.KeyArrowDown, termbox.KeyArrowLeft, termbox.KeyArrowRight,
+		termbox.KeyHome, termbox.KeyEnd, termbox.KeyPgup, termbox.KeyPgdn:
+		return true
+	}
+	return false
 }

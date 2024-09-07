@@ -5,29 +5,32 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
-func (es *EditorState) InsertRunes(event termbox.Event) {
+func (es *EditorState) InsertRunes(keyEvent termbox.Event) {
 	st := es.State
-	if st == nil || st.CurrentRow >= len(st.TextBuffer) {
-		return
+
+	if len(st.TextBuffer) == 0 {
+		st.TextBuffer = append(st.TextBuffer, []rune{}) 
 	}
 
-	row := st.TextBuffer[st.CurrentRow]
-	if st.CurrentCol > len(row) {
-		st.CurrentCol = len(row)
+	if st.CurrentRow < 0 || st.CurrentRow >= len(st.TextBuffer) {
+		st.CurrentRow = 0 
 	}
 
-	newRow := make([]rune, len(row)+1)
-	copy(newRow, row[:st.CurrentCol])
-
-	if event.Key == termbox.KeySpace {
-		newRow[st.CurrentCol] = ' '
-	} else {
-		newRow[st.CurrentCol] = event.Ch
+	if st.CurrentCol < 0 {
+		st.CurrentCol = 0 
 	}
 
-	copy(newRow[st.CurrentCol+1:], row[st.CurrentCol:])
-	st.TextBuffer[st.CurrentRow] = newRow
-	st.CurrentCol++
+	if st.CurrentCol > len(st.TextBuffer[st.CurrentRow]) {
+		st.CurrentCol = len(st.TextBuffer[st.CurrentRow])
+	}
+
+	if keyEvent.Ch != 0 {
+		st.TextBuffer[st.CurrentRow] = append(
+			st.TextBuffer[st.CurrentRow][:st.CurrentCol],
+			append([]rune{keyEvent.Ch}, st.TextBuffer[st.CurrentRow][st.CurrentCol:]...)...,
+		)
+		st.CurrentCol++
+	}
 }
 
 func (es *EditorState) DeleteRune() {
@@ -66,15 +69,34 @@ func (es *EditorState) InsertNewLine() {
 }
 
 func deleteCurrentLine(st *state.State) {
-	if st.CurrentRow < len(st.TextBuffer) {
-		st.TextBuffer = append(st.TextBuffer[:st.CurrentRow], st.TextBuffer[st.CurrentRow+1:]...)
+	if st.CurrentRow >= len(st.TextBuffer) {
+		return
+	}
+
+	deletedLine := st.TextBuffer[st.CurrentRow]
+
+	st.ChangeHistory = append(st.ChangeHistory[:st.HistoryIndex], state.Change{
+		Type:    state.Delete,
+		Row:     st.CurrentRow,
+		Col:     0,
+		Text:    deletedLine,
+		PrevRow: st.CurrentRow,
+		PrevCol: st.CurrentCol,
+	})
+	st.HistoryIndex++
+
+	st.TextBuffer = append(st.TextBuffer[:st.CurrentRow], st.TextBuffer[st.CurrentRow+1:]...)
+
+	if len(st.TextBuffer) == 0 {
+		st.TextBuffer = append(st.TextBuffer, []rune{}) 
+		st.CurrentRow = 0
+		st.CurrentCol = 0
+	} else {
 		if st.CurrentRow >= len(st.TextBuffer) {
 			st.CurrentRow = len(st.TextBuffer) - 1
 		}
-		if st.CurrentRow < 0 {
-			st.CurrentRow = 0
+		if st.CurrentCol > len(st.TextBuffer[st.CurrentRow]) {
+			st.CurrentCol = len(st.TextBuffer[st.CurrentRow])
 		}
-		st.CurrentCol = 0
-		st.Modified = true
 	}
 }

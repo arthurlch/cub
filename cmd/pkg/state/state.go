@@ -52,8 +52,8 @@ type State struct {
 	SourceFile  string
 	SelectionActive bool
 	TextBuffer  [][]rune
-	UndoBuffer  []Change
-  RedoBuffer  []Change
+	ChangeHistory   []Change  
+	HistoryIndex    int       
 	CopyBuffer  []rune
 	Modified    bool
 	QuitKey     termbox.Key

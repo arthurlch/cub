@@ -5,11 +5,10 @@ import (
 )
 
 func ApplyChange(s *state.State, c state.Change) {
+	EnsurePositionExists(s, c.Row, c.Col)
 	switch c.Type {
 	case state.Insert:
-		EnsureRowExists(s, c.Row)
 		for i, ch := range c.Text {
-			EnsureColExists(s, c.Row, c.Col+i)
 			s.TextBuffer[c.Row] = append(s.TextBuffer[c.Row][:c.Col+i], append([]rune{ch}, s.TextBuffer[c.Row][c.Col+i:]...)...)
 		}
 	case state.Delete:
@@ -17,7 +16,16 @@ func ApplyChange(s *state.State, c state.Change) {
 			s.TextBuffer[c.Row] = append(s.TextBuffer[c.Row][:c.Col], s.TextBuffer[c.Row][c.Col+len(c.Text):]...)
 		}
 	}
-	s.CurrentRow, s.CurrentCol = c.PrevRow, c.PrevCol 
+	s.CurrentRow, s.CurrentCol = c.PrevRow, c.PrevCol
+}
+
+func EnsurePositionExists(s *state.State, row, col int) {
+	for len(s.TextBuffer) <= row {
+		s.TextBuffer = append(s.TextBuffer, []rune{})
+	}
+	for len(s.TextBuffer[row]) <= col {
+		s.TextBuffer[row] = append(s.TextBuffer[row], ' ')
+	}
 }
 
 func EnsureRowExists(s *state.State, row int) {
