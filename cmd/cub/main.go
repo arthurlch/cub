@@ -32,6 +32,8 @@ func runTextEditor() {
 	}
 	defer termbox.Close()
 
+	termbox.SetOutputMode(termbox.Output256)
+
 	sharedState := &state.State{}
 	editorState := editor.NewEditorState(sharedState)
 	uiState := ui.NewEditorState(sharedState)
@@ -70,7 +72,7 @@ func mainLoop(sharedState *state.State, uiState *ui.EditorState, editorState *ed
 }
 
 func redraw(sharedState *state.State, uiState *ui.EditorState) {
-	termbox.Clear(ui.ColorBackground, termbox.ColorDefault) 
+	termbox.Clear(ui.ColorBackground, ui.ColorBackground)
 	utils.ScrollTextBuffer(sharedState)
 	utils.DisplayTextBuffer(sharedState)
 	uiState.StatusBar()

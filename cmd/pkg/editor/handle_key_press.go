@@ -5,11 +5,18 @@ import (
 
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/arthurlch/cub/cmd/pkg/ui"
+	"github.com/arthurlch/cub/cmd/pkg/utils"
 	"github.com/nsf/termbox-go"
 )
 
 func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 	st := es.State
+
+
+	if keyEvent.Key == termbox.KeyCtrlH {
+		ui.ShowHelpModal()
+		return
+	}
 
 	if keyEvent.Key == termbox.KeyEsc {
 		if st.Mode == state.InsertMode {
@@ -25,17 +32,20 @@ func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 	}
 
 	if keyEvent.Key == termbox.KeyCtrlU {
+		utils.Logger.Println("Ctrl+U pressed")
 		Undo(st)
 		return
 	}
 
 	if keyEvent.Key == termbox.KeyCtrlR {
+		utils.Logger.Println("Ctrl+R pressed")
 		Redo(st)
 		return
 	}
 
 	if keyEvent.Ch == 'i' && st.Mode == state.ViewMode {
 		st.Mode = state.InsertMode
+		endSelection(st)
 		if st.CurrentRow >= len(st.TextBuffer) {
 			st.CurrentRow = len(st.TextBuffer) - 1
 		}

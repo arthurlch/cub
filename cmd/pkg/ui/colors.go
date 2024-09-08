@@ -3,16 +3,20 @@ package ui
 import "github.com/nsf/termbox-go"
 
 const (
-	ColorBackground   = termbox.ColorDefault 
-	ColorForeground   = termbox.ColorMagenta 
-	ColorHighlight    = termbox.ColorWhite
+	ColorBackground   = termbox.ColorBlack
+	ColorForeground   = termbox.ColorWhite
+	ColorHighlight    = termbox.ColorMagenta
+	ColorPurple       = termbox.ColorMagenta
+	ColorGreen        = termbox.ColorGreen
+	ColorOrange       = termbox.ColorYellow
+	ColorRed          = termbox.ColorRed
 )
 
 var (
-	StatusBarForeground = ColorForeground
-	StatusBarBackground = termbox.ColorMagenta  
+	StatusBarForeground = ColorBackground
+	StatusBarBackground = ColorPurple
 	CursorForeground    = ColorBackground
-	CursorBackground    = termbox.ColorRed  
+	CursorBackground    = ColorOrange
 	TextForeground      = ColorForeground
 	TextBackground      = ColorBackground
 )

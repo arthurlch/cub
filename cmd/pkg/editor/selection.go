@@ -15,10 +15,14 @@ func startSelection(st *state.State) {
 		st.StartRow, st.StartCol, st.SelectionActive)
 }
 
+
 func updateSelection(st *state.State) {
 	st.EndRow = st.CurrentRow
 	st.EndCol = st.CurrentCol
-	utils.Logger.Printf("Update selection - EndRow: %d, EndCol: %d\n", st.EndRow, st.EndCol)
+
+	if st.StartRow == st.EndRow && st.StartCol <= st.EndCol {
+		st.EndCol++ 
+	}
 }
 
 func endSelection(st *state.State) {
@@ -107,6 +111,7 @@ func pasteSelection(st *state.State) {
 		newTextBuffer = append(newTextBuffer, st.TextBuffer[:st.CurrentRow]...)
 
 		newTextBuffer = append(newTextBuffer, append(before, lines[0]...))
+
 		for i := 1; i < len(lines); i++ {
 			newTextBuffer = append(newTextBuffer, lines[i])
 		}
@@ -117,14 +122,77 @@ func pasteSelection(st *state.State) {
 			newTextBuffer[len(newTextBuffer)-1] = append(newTextBuffer[len(newTextBuffer)-1], after...)
 		}
 
+		recordChange(st, state.Change{
+			Type:    state.Insert,
+			Row:     st.CurrentRow,
+			Col:     st.CurrentCol,
+			Text:    st.CopyBuffer,
+			PrevRow: st.CurrentRow,
+			PrevCol: st.CurrentCol,
+		})
+
 		newTextBuffer = append(newTextBuffer, st.TextBuffer[st.CurrentRow+1:]...)
 
 		st.TextBuffer = newTextBuffer
 		st.CurrentRow += len(lines) - 1
 		st.CurrentCol = len(newTextBuffer[st.CurrentRow]) - len(after)
 		st.Modified = true
-		utils.Logger.Printf("Paste selection - Pasted text length: %d", len(st.CopyBuffer))
+
 	} else {
 		utils.Logger.Println("Paste selection - No text to paste")
 	}
+}
+
+func deleteSelection(st *state.State) {
+
+	newTextBuffer := [][]rune{}
+	startRow, endRow := st.StartRow, st.EndRow
+	startCol, endCol := st.StartCol, st.EndCol
+
+	if startRow > endRow || (startRow == endRow && startCol > endCol) {
+		startRow, endRow = endRow, startRow
+		startCol, endCol = endCol, startCol
+	}
+
+	deletedText := utils.CollectSelectionText(st)
+
+	for row := 0; row < len(st.TextBuffer); row++ {
+		if row < startRow || row > endRow {
+			newTextBuffer = append(newTextBuffer, st.TextBuffer[row])
+		} else if row == startRow && row == endRow {
+			utils.EnsurePositionExists(st, row, endCol)
+			line := st.TextBuffer[row]
+			newLine := append(line[:startCol], line[endCol:]...)
+			newTextBuffer = append(newTextBuffer, newLine)
+		} else if row == startRow {
+			utils.EnsurePositionExists(st, row, startCol)
+			line := st.TextBuffer[row]
+			newTextBuffer = append(newTextBuffer, line[:startCol])
+		} else if row == endRow {
+			utils.EnsurePositionExists(st, row, endCol)
+			line := st.TextBuffer[row]
+			newTextBuffer = append(newTextBuffer, line[endCol:])
+		}
+	}
+
+	recordChange(st, state.Change{
+		Type:    state.Delete,
+		Row:     startRow,
+		Col:     startCol,
+		Text:    deletedText,
+		PrevRow: st.CurrentRow,
+		PrevCol: st.CurrentCol,
+	})
+
+	if len(newTextBuffer) == 0 {
+		newTextBuffer = append(newTextBuffer, []rune{}) 
+	}
+	st.TextBuffer = newTextBuffer
+
+	st.CurrentRow = startRow
+	st.CurrentCol = startCol
+
+	utils.AdjustCursorColToLineEnd(st)
+
+	st.Modified = true
 }
