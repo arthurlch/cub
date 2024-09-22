@@ -1,30 +1,39 @@
-.PHONY: build deps clean build-macos-intel build-macos-arm build-windows build-linux install
+.PHONY: help build build-all deps clean install
 
-# Default build uses the current system's OS and architecture.
-build:
-	GOOS=`go env GOOS` GOARCH=`go env GOARCH` go build -o ./cub ./cmd/cub
+BINARY_NAME = cub
+OUTPUT_DIR = bin
+GOFLAGS = CGO_ENABLED=0
 
-# Build for macOS (Intel).
-build-macos-intel:
-	GOOS=darwin GOARCH=amd64 go build -o ./cub_macos_intel ./cmd/cub
+PLATFORMS = macos-intel macos-arm windows linux
+GOOS_ARCH = darwin/amd64 darwin/arm64 windows/amd64 linux/amd64
 
-# Build for macOS (ARM).
-build-macos-arm:
-	GOOS=darwin GOARCH=arm64 go build -o ./cub_macos_arm ./cmd/cub
+all: build
 
-# Build for Windows.
-build-windows:
-	GOOS=windows GOARCH=amd64 go build -o ./cub.exe ./cmd/cub
+help:
+	@echo "Available targets:"
+	@echo "  build             Build the binary for the current system."
+	@echo "  build-all         Build binaries for all supported platforms."
+	@echo "  deps              Install dependencies."
+	@echo "  clean             Remove built binaries."
+	@echo "  install           Install the binary to /usr/local/bin."
+	@echo "  help              Show this help message."
 
-# Build for Linux.
-build-linux:
-	GOOS=linux GOARCH=amd64 go build -o ./cub_linux ./cmd/cub
+build: deps
+	mkdir -p $(OUTPUT_DIR)
+	$(GOFLAGS) go build -o $(OUTPUT_DIR)/$(BINARY_NAME) ./cmd/cub
+
+build-all: $(PLATFORMS)
+
+$(PLATFORMS):
+	@echo "Building for $@..."
+	GOOS=$(word 1, $(subst -, ,$@)) GOARCH=$(word 2, $(subst -, ,$@)) \
+	$(GOFLAGS) go build -o $(OUTPUT_DIR)/$(BINARY_NAME)_$@ ./cmd/cub
 
 deps:
 	go mod tidy
 
 clean:
-	rm -f ./cub ./cub_macos_intel ./cub_macos_arm ./cub.exe ./cub_linux
+	rm -rf $(OUTPUT_DIR)
 
 install: build
-	mv ./cub /usr/local/bin/cub
+	install -Dm755 $(OUTPUT_DIR)/$(BINARY_NAME) /usr/local/bin/$(BINARY_NAME)
