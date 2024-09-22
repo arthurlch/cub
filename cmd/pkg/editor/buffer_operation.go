@@ -12,11 +12,15 @@ func Undo(s *state.State) {
 	s.HistoryIndex--
 	change := s.ChangeHistory[s.HistoryIndex]
 	inverseChange := invertChange(change)
+
 	utils.ApplyChange(s, inverseChange)
 
+	if change.Type == state.Insert {
+		s.CurrentCol -= len(change.Text)  
+	} else if change.Type == state.Delete {
+		s.CurrentCol += len(change.Text)  
+	}
 	s.CurrentRow = change.Row
-	s.CurrentCol = change.Col
-
 	utils.AdjustCursorColToLineEnd(s)
 }
 
@@ -26,11 +30,15 @@ func Redo(s *state.State) {
 	}
 	change := s.ChangeHistory[s.HistoryIndex]
 	s.HistoryIndex++
+
 	utils.ApplyChange(s, change)
 
+	if change.Type == state.Insert {
+		s.CurrentCol += len(change.Text)  
+	} else if change.Type == state.Delete {
+		s.CurrentCol -= len(change.Text)  
+	}
 	s.CurrentRow = change.Row
-	s.CurrentCol = change.Col
-
 	utils.AdjustCursorColToLineEnd(s)
 }
 
