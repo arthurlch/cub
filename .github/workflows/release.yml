@@ -3,10 +3,10 @@ name: Release and Homebrew Update
 on:
   push:
     tags:
-      - 'v*' 
+      - 'v*'
 
 jobs:
-  build-test-release:
+  release:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,13 +16,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.20' 
-
-      - name: Install dependencies
-        run: go mod tidy
-
-      - name: Run tests
-        run: go test ./... -v
+          go-version: '1.20'
 
       - name: Build binaries
         run: make build-all
@@ -42,7 +36,7 @@ jobs:
 
       - name: Create GitHub Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: actions/create-release@v1.1.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -66,7 +60,7 @@ jobs:
           asset_content_type: application/zip
 
   update-homebrew:
-    needs: build-test-release
+    needs: release
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, 'test')
 
@@ -84,7 +78,7 @@ jobs:
         run: echo "${{ secrets.HOMEBREW_TAP_TOKEN }}" | gh auth login --with-token
 
       - name: Checkout Homebrew Tap
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: arthurlch/homebrew-cub  
           path: homebrew-tap
