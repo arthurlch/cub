@@ -1,58 +1,59 @@
-package editor
+package editor_test
 
 import (
 	"testing"
 
+	"github.com/arthurlch/cub/cmd/pkg/editor"
 	"github.com/arthurlch/cub/cmd/pkg/state"
+	"github.com/arthurlch/cub/cmd/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUndo(t *testing.T) {
-	st := &state.State{
-		TextBuffer: []([]rune){
-			[]rune("Hello, World!"),
-		},
-		HistoryIndex: 1,
-		ChangeHistory: []state.Operation{
-			{
-				Type: state.Insert,
-				Row:  0,
-				Col:  12,
-				Text: [][]rune{[]rune("!")},
-			},
-		},
+func TestUndoRedo(t *testing.T) {
+	initialTextBuffer := [][]rune{
+		[]rune("Hello"),
+		[]rune("Cub"),
+	}
+	stateInstance := &state.State{
+		TextBuffer: utils.DeepCopyTextBuffer(initialTextBuffer),
 		CurrentRow: 0,
-		CurrentCol: 13,
+		CurrentCol: 5,
 	}
 
-	Undo(st)
+	editedTextBuffer := [][]rune{
+		[]rune("Hello,"),
+		[]rune("Cub"),
+	}
+	stateInstance.UndoBuffer = append(stateInstance.UndoBuffer, state.UndoState{
+		TextBuffer: utils.DeepCopyTextBuffer(stateInstance.TextBuffer),
+		CurrentRow: stateInstance.CurrentRow,
+		CurrentCol: stateInstance.CurrentCol,
+	})
+	stateInstance.TextBuffer = utils.DeepCopyTextBuffer(editedTextBuffer)
+	stateInstance.CurrentRow = 0
+	stateInstance.CurrentCol = 6
 
-	assert.Equal(t, 0, st.HistoryIndex, "HistoryIndex should decrement after Undo")
-	assert.Equal(t, []rune("Hello, World"), st.TextBuffer[0], "TextBuffer should have the last change undone")
-	assert.Equal(t, 12, st.CurrentCol, "CurrentCol should reflect the undone change (move back)")
+	editor.Undo(stateInstance)
+	assert.Equal(t, initialTextBuffer, stateInstance.TextBuffer, "Undo should revert to the original text buffer")
+	assert.Equal(t, 0, stateInstance.CurrentRow, "Undo should revert to the original row position")
+	assert.Equal(t, 5, stateInstance.CurrentCol, "Undo should revert to the original column position")
+
+	editor.Redo(stateInstance)
+	assert.Equal(t, editedTextBuffer, stateInstance.TextBuffer, "Redo should restore the edited text buffer")
+	assert.Equal(t, 0, stateInstance.CurrentRow, "Redo should restore the edited row position")
+	assert.Equal(t, 6, stateInstance.CurrentCol, "Redo should restore the edited column position")
 }
 
-func TestRedo(t *testing.T) {
-	st := &state.State{
-		TextBuffer: []([]rune){
-			[]rune("Hello, World"),
-		},
-		HistoryIndex: 0,
-		ChangeHistory: []state.Operation{
-			{
-				Type: state.Insert,
-				Row:  0,
-				Col:  12,
-				Text: [][]rune{[]rune("!")},
-			},
-		},
-		CurrentRow: 0,
-		CurrentCol: 12,
-	}
+func TestUndoEmptyBuffer(t *testing.T) {
+	stateInstance := &state.State{}
 
-	Redo(st)
+	editor.Undo(stateInstance)
+	assert.Empty(t, stateInstance.RedoBuffer, "RedoBuffer should remain empty when Undo is called on an empty UndoBuffer")
+}
 
-	assert.Equal(t, 1, st.HistoryIndex, "HistoryIndex should increment after Redo")
-	assert.Equal(t, []rune("Hello, World!"), st.TextBuffer[0], "TextBuffer should have the change redone")
-	assert.Equal(t, 13, st.CurrentCol, "CurrentCol should reflect the redone change")
+func TestRedoEmptyBuffer(t *testing.T) {
+	stateInstance := &state.State{}
+
+	editor.Redo(stateInstance)
+	assert.Empty(t, stateInstance.UndoBuffer, "UndoBuffer should remain empty when Redo is called on an empty RedoBuffer")
 }
