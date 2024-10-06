@@ -2,101 +2,119 @@ package editor
 
 import (
 	"github.com/arthurlch/cub/cmd/pkg/state"
+	"github.com/arthurlch/cub/cmd/pkg/utils"
 	"github.com/nsf/termbox-go"
 )
 
 func (es *EditorState) InsertRunes(keyEvent termbox.Event) {
-	st := es.State
+    st := es.State
 
-	if len(st.TextBuffer) == 0 {
-		st.TextBuffer = append(st.TextBuffer, []rune{}) 
-	}
+    if len(st.TextBuffer) == 0 {
+        st.TextBuffer = append(st.TextBuffer, []rune{})
+    }
 
-	if st.CurrentRow < 0 || st.CurrentRow >= len(st.TextBuffer) {
-		st.CurrentRow = 0 
-	}
+    if keyEvent.Ch != 0 {
+        st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
+            TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
+            CurrentRow: st.CurrentRow,
+            CurrentCol: st.CurrentCol,
+        })
+        st.RedoBuffer = nil
 
-	if st.CurrentCol < 0 {
-		st.CurrentCol = 0 
-	}
+        line := st.TextBuffer[st.CurrentRow]
+        newLine := append(line[:st.CurrentCol], append([]rune{keyEvent.Ch}, line[st.CurrentCol:]...)...)
+        st.TextBuffer[st.CurrentRow] = newLine
 
-	if st.CurrentCol > len(st.TextBuffer[st.CurrentRow]) {
-		st.CurrentCol = len(st.TextBuffer[st.CurrentRow])
-	}
-
-	if keyEvent.Ch != 0 {
-		st.TextBuffer[st.CurrentRow] = append(
-			st.TextBuffer[st.CurrentRow][:st.CurrentCol],
-			append([]rune{keyEvent.Ch}, st.TextBuffer[st.CurrentRow][st.CurrentCol:]...)...,
-		)
-		st.CurrentCol++
-	}
+        st.CurrentCol++
+        st.Modified = true
+    }
 }
 
 func (es *EditorState) DeleteRune() {
-	st := es.State
-	if st.CurrentRow < len(st.TextBuffer) && st.CurrentCol > 0 {
-		row := st.TextBuffer[st.CurrentRow]
-		st.TextBuffer[st.CurrentRow] = append(row[:st.CurrentCol-1], row[st.CurrentCol:]...)
-		st.CurrentCol--
-	} else if st.CurrentCol == 0 && st.CurrentRow > 0 {
-		prevRowLength := len(st.TextBuffer[st.CurrentRow-1])
-		st.CurrentCol = prevRowLength
-		st.TextBuffer[st.CurrentRow-1] = append(st.TextBuffer[st.CurrentRow-1], st.TextBuffer[st.CurrentRow]...)
-		st.TextBuffer = append(st.TextBuffer[:st.CurrentRow], st.TextBuffer[st.CurrentRow+1:]...)
-		st.CurrentRow--
-	}
+    st := es.State
+
+    if st.CurrentCol > 0 {
+        st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
+            TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
+            CurrentRow: st.CurrentRow,
+            CurrentCol: st.CurrentCol,
+        })
+        st.RedoBuffer = nil 
+
+        line := st.TextBuffer[st.CurrentRow]
+        newLine := append(line[:st.CurrentCol-1], line[st.CurrentCol:]...)
+        st.TextBuffer[st.CurrentRow] = newLine
+
+        st.CurrentCol--
+        st.Modified = true
+    } else if st.CurrentRow > 0 {
+        st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
+            TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
+            CurrentRow: st.CurrentRow,
+            CurrentCol: st.CurrentCol,
+        })
+        st.RedoBuffer = nil 
+
+        prevLine := st.TextBuffer[st.CurrentRow-1]
+        currentLine := st.TextBuffer[st.CurrentRow]
+        st.TextBuffer[st.CurrentRow-1] = append(prevLine, currentLine...)
+        st.TextBuffer = append(st.TextBuffer[:st.CurrentRow], st.TextBuffer[st.CurrentRow+1:]...)
+
+        st.CurrentRow--
+        st.CurrentCol = len(prevLine)
+        st.Modified = true
+    }
 }
 
 func (es *EditorState) InsertNewLine() {
-	st := es.State
-	if st == nil || st.CurrentRow >= len(st.TextBuffer) {
-		return
-	}
-	beforeCursor := st.TextBuffer[st.CurrentRow][:st.CurrentCol]
-	afterCursor := st.TextBuffer[st.CurrentRow][st.CurrentCol:]
+    st := es.State
 
-	st.TextBuffer[st.CurrentRow] = beforeCursor
+    st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
+        TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
+        CurrentRow: st.CurrentRow,
+        CurrentCol: st.CurrentCol,
+    })
+    st.RedoBuffer = nil
 
-	if st.CurrentRow+1 < len(st.TextBuffer) {
-		st.TextBuffer = append(st.TextBuffer[:st.CurrentRow+1], append([][]rune{afterCursor}, st.TextBuffer[st.CurrentRow+1:]...)...)
-	} else {
-		st.TextBuffer = append(st.TextBuffer, afterCursor)
-	}
+    line := st.TextBuffer[st.CurrentRow]
+    beforeCursor := line[:st.CurrentCol]
+    afterCursor := line[st.CurrentCol:]
 
-	st.CurrentRow++
-	st.CurrentCol = 0
+    st.TextBuffer[st.CurrentRow] = beforeCursor
+
+    st.TextBuffer = append(st.TextBuffer[:st.CurrentRow+1], append([][]rune{afterCursor}, st.TextBuffer[st.CurrentRow+1:]...)...)
+
+    st.CurrentRow++
+    st.CurrentCol = 0
+    st.Modified = true
 }
 
 func deleteCurrentLine(st *state.State) {
 	if st.CurrentRow >= len(st.TextBuffer) {
-		return
+			return
 	}
 
-	deletedLine := st.TextBuffer[st.CurrentRow]
-
-	st.ChangeHistory = append(st.ChangeHistory[:st.HistoryIndex], state.Change{
-		Type:    state.Delete,
-		Row:     st.CurrentRow,
-		Col:     0,
-		Text:    deletedLine,
-		PrevRow: st.CurrentRow,
-		PrevCol: st.CurrentCol,
+	st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
+			TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
+			CurrentRow: st.CurrentRow,
+			CurrentCol: st.CurrentCol,
 	})
-	st.HistoryIndex++
+	st.RedoBuffer = nil 
 
 	st.TextBuffer = append(st.TextBuffer[:st.CurrentRow], st.TextBuffer[st.CurrentRow+1:]...)
 
 	if len(st.TextBuffer) == 0 {
-		st.TextBuffer = append(st.TextBuffer, []rune{}) 
-		st.CurrentRow = 0
-		st.CurrentCol = 0
+			st.TextBuffer = append(st.TextBuffer, []rune{})
+			st.CurrentRow = 0
+			st.CurrentCol = 0
 	} else {
-		if st.CurrentRow >= len(st.TextBuffer) {
-			st.CurrentRow = len(st.TextBuffer) - 1
-		}
-		if st.CurrentCol > len(st.TextBuffer[st.CurrentRow]) {
-			st.CurrentCol = len(st.TextBuffer[st.CurrentRow])
-		}
+			if st.CurrentRow >= len(st.TextBuffer) {
+					st.CurrentRow = len(st.TextBuffer) - 1
+			}
+			if st.CurrentCol > len(st.TextBuffer[st.CurrentRow]) {
+					st.CurrentCol = len(st.TextBuffer[st.CurrentRow])
+			}
 	}
+
+	st.Modified = true
 }

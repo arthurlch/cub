@@ -46,7 +46,7 @@ func handleViewModeKeyPress(st *state.State, keyEvent termbox.Event) {
 		updateSelection(st)
 	}
 
-	adjustCursorColToLineEnd(st)
+	utils.AdjustCursorColToLineEnd(st)
 	utils.ScrollTextBuffer(st)
 
 	

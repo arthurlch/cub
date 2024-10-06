@@ -1,5 +1,3 @@
-// cmd/pkg/editor/buffer_operation_test.go
-
 package editor
 
 import (
@@ -15,12 +13,12 @@ func TestUndo(t *testing.T) {
 			[]rune("Hello, World!"),
 		},
 		HistoryIndex: 1,
-		ChangeHistory: []state.Change{
+		ChangeHistory: []state.Operation{
 			{
 				Type: state.Insert,
 				Row:  0,
 				Col:  12,
-				Text: []rune("!"),
+				Text: [][]rune{[]rune("!")},
 			},
 		},
 		CurrentRow: 0,
@@ -40,12 +38,12 @@ func TestRedo(t *testing.T) {
 			[]rune("Hello, World"),
 		},
 		HistoryIndex: 0,
-		ChangeHistory: []state.Change{
+		ChangeHistory: []state.Operation{
 			{
 				Type: state.Insert,
 				Row:  0,
 				Col:  12,
-				Text: []rune("!"),
+				Text: [][]rune{[]rune("!")},
 			},
 		},
 		CurrentRow: 0,

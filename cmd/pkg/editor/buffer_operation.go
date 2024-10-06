@@ -6,56 +6,45 @@ import (
 )
 
 func Undo(s *state.State) {
-	if s.HistoryIndex <= 0 {
-		return
+	if len(s.UndoBuffer) == 0 {
+			return
 	}
-	s.HistoryIndex--
-	change := s.ChangeHistory[s.HistoryIndex]
-	inverseChange := invertChange(change)
 
-	utils.ApplyChange(s, inverseChange)
+	s.RedoBuffer = append(s.RedoBuffer, state.UndoState{
+			TextBuffer: utils.DeepCopyTextBuffer(s.TextBuffer),
+			CurrentRow: s.CurrentRow,
+			CurrentCol: s.CurrentCol,
+	})
 
-	if change.Type == state.Insert {
-		s.CurrentCol -= len(change.Text)  
-	} else if change.Type == state.Delete {
-		s.CurrentCol += len(change.Text)  
-	}
-	s.CurrentRow = change.Row
-	utils.AdjustCursorColToLineEnd(s)
+	lastIndex := len(s.UndoBuffer) - 1
+	lastState := s.UndoBuffer[lastIndex]
+	s.TextBuffer = lastState.TextBuffer
+	s.CurrentRow = lastState.CurrentRow
+	s.CurrentCol = lastState.CurrentCol
+	s.UndoBuffer = s.UndoBuffer[:lastIndex]
+
+	utils.ValidateCursorPosition(s)
+	s.Modified = true
 }
 
 func Redo(s *state.State) {
-	if s.HistoryIndex >= len(s.ChangeHistory) {
-		return
+	if len(s.RedoBuffer) == 0 {
+			return
 	}
-	change := s.ChangeHistory[s.HistoryIndex]
-	s.HistoryIndex++
 
-	utils.ApplyChange(s, change)
+	s.UndoBuffer = append(s.UndoBuffer, state.UndoState{
+			TextBuffer: utils.DeepCopyTextBuffer(s.TextBuffer),
+			CurrentRow: s.CurrentRow,
+			CurrentCol: s.CurrentCol,
+	})
 
-	if change.Type == state.Insert {
-		s.CurrentCol += len(change.Text)  
-	} else if change.Type == state.Delete {
-		s.CurrentCol -= len(change.Text)  
-	}
-	s.CurrentRow = change.Row
-	utils.AdjustCursorColToLineEnd(s)
-}
+	lastIndex := len(s.RedoBuffer) - 1
+	lastState := s.RedoBuffer[lastIndex]
+	s.TextBuffer = lastState.TextBuffer
+	s.CurrentRow = lastState.CurrentRow
+	s.CurrentCol = lastState.CurrentCol
+	s.RedoBuffer = s.RedoBuffer[:lastIndex]
 
-func invertChange(c state.Change) state.Change {
-	return state.Change{
-		Type:    invertChangeType(c.Type),
-		Row:     c.Row,
-		Col:     c.Col,
-		Text:    c.Text,
-		PrevRow: c.PrevRow,
-		PrevCol: c.PrevCol,
-	}
-}
-
-func invertChangeType(t state.ChangeType) state.ChangeType {
-	if t == state.Insert {
-		return state.Delete
-	}
-	return state.Insert
+	utils.ValidateCursorPosition(s)
+	s.Modified = true
 }

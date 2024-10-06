@@ -7,89 +7,119 @@ import (
 )
 
 func handleInsertModeKeyPress(es *EditorState, keyEvent termbox.Event) {
-	st := es.State
-	updateSelection(st)
+    st := es.State
 
-	if len(st.TextBuffer) == 0 {
-		st.TextBuffer = append(st.TextBuffer, []rune{}) // add an empty line if the buffer is empty
-	}
+    updateSelection(st)
 
-	if st.CurrentRow >= len(st.TextBuffer) {
-		st.CurrentRow = len(st.TextBuffer) - 1
-	}
-	if st.CurrentRow < 0 {
-		st.CurrentRow = 0
-	}
-	if st.CurrentCol > len(st.TextBuffer[st.CurrentRow]) {
-		st.CurrentCol = len(st.TextBuffer[st.CurrentRow])
-	}
-	if st.CurrentCol < 0 {
-		st.CurrentCol = 0
-	}
+    if len(st.TextBuffer) == 0 {
+        st.TextBuffer = append(st.TextBuffer, []rune{})
+    }
 
-	switch keyEvent.Key {
-	case termbox.KeyArrowUp, termbox.KeyArrowDown, termbox.KeyArrowLeft, termbox.KeyArrowRight,
-		termbox.KeyHome, termbox.KeyEnd, termbox.KeyPgup, termbox.KeyPgdn:
-		handleNavigation(st, keyEvent)
-		utils.AdjustCursorColToLineEnd(st)
-	case termbox.KeyEnter:
-		currentLine := st.TextBuffer[st.CurrentRow]
-		beforeCursor := currentLine[:st.CurrentCol]
-		afterCursor := currentLine[st.CurrentCol:]
+    utils.ValidateCursorPosition(st)
 
-		st.TextBuffer[st.CurrentRow] = beforeCursor
+    switch keyEvent.Key {
+    case termbox.KeyArrowUp, termbox.KeyArrowDown, termbox.KeyArrowLeft, termbox.KeyArrowRight,
+        termbox.KeyHome, termbox.KeyEnd, termbox.KeyPgup, termbox.KeyPgdn:
+        handleNavigation(st, keyEvent)
+        utils.ValidateCursorPosition(st)
 
-		st.TextBuffer = append(st.TextBuffer[:st.CurrentRow+1], append([][]rune{afterCursor}, st.TextBuffer[st.CurrentRow+1:]...)...)
+    case termbox.KeyEnter:
+        st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
+            TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
+            CurrentRow: st.CurrentRow,
+            CurrentCol: st.CurrentCol,
+        })
+        st.RedoBuffer = nil 
 
-		st.CurrentRow++
-		st.CurrentCol = 0
+        currentLine := st.TextBuffer[st.CurrentRow]
+        beforeCursor := currentLine[:st.CurrentCol]
+        afterCursor := currentLine[st.CurrentCol:]
 
-		recordChange(st, state.Change{Type: state.Insert, Row: st.CurrentRow, Col: 0, Text: []rune{'\n'}})
-		st.Modified = true
-	case termbox.KeyTab:
-		recordChange(st, state.Change{Type: state.Insert, Row: st.CurrentRow, Col: st.CurrentCol, Text: []rune{'\t'}})
-		for i := 0; i < 4; i++ {
-			es.InsertRunes(keyEvent)
-		}
-		st.Modified = true
-	case termbox.KeySpace:
-		currentLine := st.TextBuffer[st.CurrentRow]
-		st.TextBuffer[st.CurrentRow] = append(currentLine[:st.CurrentCol], append([]rune{' '}, currentLine[st.CurrentCol:]...)...)
-		
-		st.CurrentCol++
+        st.TextBuffer[st.CurrentRow] = beforeCursor
 
-		recordChange(st, state.Change{Type: state.Insert, Row: st.CurrentRow, Col: st.CurrentCol - 1, Text: []rune{' '}})
-		st.Modified = true
-	case termbox.KeyBackspace, termbox.KeyBackspace2:
-		if st.CurrentRow < len(st.TextBuffer) && st.CurrentCol > 0 {
-			deletedText := st.TextBuffer[st.CurrentRow][st.CurrentCol-1 : st.CurrentCol]
-			recordChange(st, state.Change{Type: state.Delete, Row: st.CurrentRow, Col: st.CurrentCol - 1, Text: deletedText})
-			es.DeleteRune()
-			st.Modified = true
-		} else if st.CurrentCol == 0 && st.CurrentRow > 0 {
-			prevRowLength := len(st.TextBuffer[st.CurrentRow-1])
-			st.CurrentCol = prevRowLength
-			st.TextBuffer[st.CurrentRow-1] = append(st.TextBuffer[st.CurrentRow-1], st.TextBuffer[st.CurrentRow]...)
-			st.TextBuffer = append(st.TextBuffer[:st.CurrentRow], st.TextBuffer[st.CurrentRow+1:]...)
-			st.CurrentRow--
-			st.Modified = true
-		}
-	default:
-		if keyEvent.Ch != 0 {
-			recordChange(st, state.Change{Type: state.Insert, Row: st.CurrentRow, Col: st.CurrentCol, Text: []rune{keyEvent.Ch}})
-			es.InsertRunes(keyEvent)
-			st.Modified = true
-		}
-	}
+        st.TextBuffer = append(st.TextBuffer[:st.CurrentRow+1], append([][]rune{afterCursor}, st.TextBuffer[st.CurrentRow+1:]...)...)
 
-	utils.AdjustCursorColToLineEnd(st)
-	utils.ScrollTextBuffer(st)
-}
+        st.CurrentRow++
+        st.CurrentCol = 0
+        st.Modified = true
 
-func recordChange(s *state.State, change state.Change) {
-	if s.HistoryIndex < len(s.ChangeHistory) {
-		s.ChangeHistory = s.ChangeHistory[:s.HistoryIndex]
-	}
-	s.ChangeHistory = append(s.ChangeHistory, change)
-	s.HistoryIndex++
+    case termbox.KeyTab:
+        st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
+            TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
+            CurrentRow: st.CurrentRow,
+            CurrentCol: st.CurrentCol,
+        })
+        st.RedoBuffer = nil 
+
+        tabSpaces := []rune{' ', ' ', ' ', ' '}
+        line := st.TextBuffer[st.CurrentRow]
+        newLine := append(line[:st.CurrentCol], append(tabSpaces, line[st.CurrentCol:]...)...)
+        st.TextBuffer[st.CurrentRow] = newLine
+        st.CurrentCol += len(tabSpaces)
+        st.Modified = true
+
+    case termbox.KeySpace:
+        st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
+            TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
+            CurrentRow: st.CurrentRow,
+            CurrentCol: st.CurrentCol,
+        })
+        st.RedoBuffer = nil 
+
+        line := st.TextBuffer[st.CurrentRow]
+        newLine := append(line[:st.CurrentCol], append([]rune{' '}, line[st.CurrentCol:]...)...)
+        st.TextBuffer[st.CurrentRow] = newLine
+        st.CurrentCol++
+        st.Modified = true
+
+    case termbox.KeyBackspace, termbox.KeyBackspace2:
+        if st.CurrentCol > 0 {
+            st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
+                TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
+                CurrentRow: st.CurrentRow,
+                CurrentCol: st.CurrentCol,
+            })
+            st.RedoBuffer = nil 
+
+            line := st.TextBuffer[st.CurrentRow]
+            newLine := append(line[:st.CurrentCol-1], line[st.CurrentCol:]...)
+            st.TextBuffer[st.CurrentRow] = newLine
+            st.CurrentCol--
+            st.Modified = true
+        } else if st.CurrentCol == 0 && st.CurrentRow > 0 {
+            st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
+                TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
+                CurrentRow: st.CurrentRow,
+                CurrentCol: st.CurrentCol,
+            })
+            st.RedoBuffer = nil 
+
+            prevLine := st.TextBuffer[st.CurrentRow-1]
+            currentLine := st.TextBuffer[st.CurrentRow]
+            st.TextBuffer[st.CurrentRow-1] = append(prevLine, currentLine...)
+            st.TextBuffer = append(st.TextBuffer[:st.CurrentRow], st.TextBuffer[st.CurrentRow+1:]...)
+            st.CurrentRow--
+            st.CurrentCol = len(prevLine)
+            st.Modified = true
+        }
+
+    default:
+        if keyEvent.Ch != 0 {
+            st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
+                TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
+                CurrentRow: st.CurrentRow,
+                CurrentCol: st.CurrentCol,
+            })
+            st.RedoBuffer = nil 
+
+            line := st.TextBuffer[st.CurrentRow]
+            newLine := append(line[:st.CurrentCol], append([]rune{keyEvent.Ch}, line[st.CurrentCol:]...)...)
+            st.TextBuffer[st.CurrentRow] = newLine
+            st.CurrentCol++
+            st.Modified = true
+        }
+    }
+
+    utils.ValidateCursorPosition(st)
+    utils.ScrollTextBuffer(st)
 }

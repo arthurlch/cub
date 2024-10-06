@@ -89,7 +89,7 @@ func TestDeleteCurrentLine(t *testing.T) {
 		CurrentRow: 1,
 		CurrentCol: 5,
 		HistoryIndex: 2,
-		ChangeHistory: []state.Change{
+		ChangeHistory: []state.Operation{
 		},
 	}
 

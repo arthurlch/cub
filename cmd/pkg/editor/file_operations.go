@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/arthurlch/cub/cmd/pkg/state"
+	"github.com/arthurlch/cub/cmd/pkg/utils"
 )
 
 func (es *EditorState) ReadFile(filename string) error {
@@ -32,6 +33,13 @@ func (es *EditorState) ReadFile(filename string) error {
 		st.TextBuffer = append(st.TextBuffer, []rune{})
 	}
 	st.SourceFile = filename
+	
+	st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
+		TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
+		CurrentRow: st.CurrentRow,
+		CurrentCol: st.CurrentCol,
+	})
+
 	return scanner.Err()
 }
 
