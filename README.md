@@ -1,7 +1,3 @@
-Here's the updated `README.md` with the changes you requested:
-
----
-
 # Cub Text Editor
 
 <p align="center">
