@@ -7,8 +7,6 @@
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/arthurlch/cub)
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/arthurlch/cub/ci.yml)
 ![GitHub issues](https://img.shields.io/github/issues/arthurlch/cub)
-![GitHub license](https://img.shields.io/github/license/arthurlch/cub)
-![GitHub stars](https://img.shields.io/github/stars/arthurlch/cub)
 
 ## Overview
 

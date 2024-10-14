@@ -7,18 +7,12 @@ import (
 )
 
 func handleViewModeKeyPress(st *state.State, keyEvent termbox.Event) {
-
 	if st.SelectionActive && (keyEvent.Key == termbox.KeyDelete || keyEvent.Key == termbox.KeyBackspace || keyEvent.Key == termbox.KeyBackspace2) {
-		deleteSelection(st) 
+		deleteSelection(st)
 		return
 	}
 
 	switch keyEvent.Ch {
-	case 'o', 'p', 'k', 'l':
-		handleNavigationAlias(st, keyEvent.Ch)
-		if st.SelectionActive {
-			updateSelection(st)  
-		}
 	case 's':
 		startSelection(st)
 	case 'z':
@@ -40,6 +34,7 @@ func handleViewModeKeyPress(st *state.State, keyEvent termbox.Event) {
 		}
 	default:
 		handleSpecialKeys(st, keyEvent)
+		handleComplexNavigation(st, keyEvent)
 	}
 
 	if st.SelectionActive && isNavigationKey(keyEvent) {
@@ -48,31 +43,7 @@ func handleViewModeKeyPress(st *state.State, keyEvent termbox.Event) {
 
 	utils.AdjustCursorColToLineEnd(st)
 	utils.ScrollTextBuffer(st)
-
-	
 }
-
-/* 
-
-Decision making for this one was tough but ergonomically speaking 
-Having that position is better for the wrist, problem with fully horinzontal setup
-is that the wrist is getting tired quickly. 
-
-*/ 
-
-func handleNavigationAlias(st *state.State, ch rune) {
-	switch ch {
-	case 'o':
-		handleNavigation(st, termbox.Event{Key: termbox.KeyArrowUp})
-	case 'p':
-		handleNavigation(st, termbox.Event{Key: termbox.KeyArrowDown})
-	case 'k':
-		handleNavigation(st, termbox.Event{Key: termbox.KeyArrowLeft})
-	case 'l':
-		handleNavigation(st, termbox.Event{Key: termbox.KeyArrowRight})
-	}
-}
-
 
 func handleSpecialKeys(st *state.State, keyEvent termbox.Event) {
 	switch keyEvent.Key {

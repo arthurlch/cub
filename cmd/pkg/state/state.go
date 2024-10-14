@@ -41,4 +41,5 @@ type State struct {
 	ErrorMessage     string
 	MessageTimestamp time.Time
 	LastKey          rune
+	LineNumberBuffer string
 }

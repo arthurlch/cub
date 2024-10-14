@@ -5,7 +5,7 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
-func (es *EditorState) ProcessKeyPress() {
+func (es *EditorState) ProcessKeyPress(fileType string) {
 	st := es.State
 	keyEvent := utils.GetKey()
 

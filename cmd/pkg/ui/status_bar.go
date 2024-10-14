@@ -3,12 +3,13 @@ package ui
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/mattn/go-runewidth"
 	"github.com/nsf/termbox-go"
 )
+
+
 
 type EditorState struct {
 	State *state.State
@@ -17,7 +18,6 @@ type EditorState struct {
 func NewEditorState(sharedState *state.State) *EditorState {
 	return &EditorState{State: sharedState}
 }
-
 
 func (es *EditorState) StatusBar() {
 	st := es.State
@@ -40,14 +40,9 @@ func (es *EditorState) StatusBar() {
 	cursorStatus := fmt.Sprintf("Row %d Col %d", st.CurrentRow+1, st.CurrentCol)
 	statusBar := fmt.Sprintf("%s %s %s", modeStatus, fileStatus, cursorStatus)
 
-	if time.Since(st.MessageTimestamp) < 5*time.Second {
-		statusBar += " | " + st.ErrorMessage
-	}
-
 	fullWidthStatusBar := statusBar + strings.Repeat(" ", st.Cols-len(statusBar))
 
-	termbox.SetCursor(0, st.Rows)
-	printMessage(0, st.Rows, termbox.ColorBlack, termbox.ColorWhite, fullWidthStatusBar)
+	printMessage(0, st.Rows, StatusBarForeground, StatusBarBackground, fullWidthStatusBar)
 }
 
 func printMessage(col, row int, foreground, background termbox.Attribute, message string) {

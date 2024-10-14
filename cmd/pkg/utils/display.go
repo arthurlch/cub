@@ -1,58 +1,60 @@
 package utils
 
 import (
+	"github.com/alecthomas/chroma"
 	"github.com/arthurlch/cub/cmd/pkg/state"
+	"github.com/arthurlch/cub/cmd/pkg/syntax"
+	"github.com/arthurlch/cub/cmd/pkg/ui"
 	"github.com/nsf/termbox-go"
 )
 
-func DisplayTextBuffer(s *state.State) {
-	var row, col int
-	for row = 0; row < s.Rows; row++ {
-			textBufferRow := row + s.OffsetRow
-			for col = 0; col < s.Cols; col++ {
-					textBufferCol := col + s.OffsetCol
-					if textBufferRow >= 0 && textBufferRow < len(s.TextBuffer) && textBufferCol < len(s.TextBuffer[textBufferRow]) {
-							char := s.TextBuffer[textBufferRow][textBufferCol]
-							fgColor := termbox.ColorDefault
-							bgColor := termbox.ColorDefault
+func DisplayTextBuffer(s *state.State, fileType string) {
+	width, height := termbox.Size()
 
-							if s.SelectionActive && isSelected(s, textBufferRow, textBufferCol) {
-									fgColor = termbox.ColorBlack
-									bgColor = termbox.ColorWhite
-							}
+	for row := 0; row < height; row++ {
+		if row+s.OffsetRow >= len(s.TextBuffer) {
+			break // dont display if no lines
+		}
 
-							if char != '\t' {
-									termbox.SetCell(col, row, char, fgColor, bgColor)
-							} else {
-									termbox.SetCell(col, row, rune(' '), fgColor, bgColor)
-							}
-					} else if row+s.OffsetCol > len(s.TextBuffer) {
-							termbox.SetCell(0, row, rune('*'), termbox.ColorLightMagenta, termbox.ColorDefault)
-							termbox.SetChar(col, row, rune('\n'))
-					}
-			}
+		line := string(s.TextBuffer[row+s.OffsetRow])
+		if syntax.IsSupportedLanguage(fileType) {
+			renderHighlightedLine(line, row, width, fileType)
+		} else {
+			renderPlainLine(line, row, width)
+		}
 	}
 
-	termbox.SetCursor(s.CurrentCol-s.OffsetCol, s.CurrentRow-s.OffsetRow)
+	termbox.Flush()
 }
 
-func isSelected(st *state.State, row, col int) bool {
-	startRow, endRow := st.StartRow, st.EndRow
-	startCol, endCol := st.StartCol, st.EndCol
-
-	if startRow > endRow || (startRow == endRow && startCol > endCol) {
-			startRow, endRow = endRow, startRow
-			startCol, endCol = endCol, startCol
+func renderPlainLine(line string, row, width int) {
+	for col, ch := range line {
+		if col < width {
+			termbox.SetCell(col, row, ch, ui.TextForeground, ui.ColorBackground)
+		}
 	}
 
-	if row < startRow || row > endRow {
-			return false
+	for col := len(line); col < width; col++ {
+		termbox.SetCell(col, row, ' ', ui.TextForeground, ui.ColorBackground)
 	}
-	if row == startRow && col < startCol {
-			return false
+}
+
+func renderHighlightedLine(line string, row, width int, fileType string) {
+	lexer := syntax.GetLexer(fileType)
+	iterator, _ := lexer.Tokenise(nil, line)
+
+	col := 0
+	for token := iterator(); token != chroma.EOF; token = iterator() {
+		fg, bg := syntax.GetTermboxColor(token.Type, token.Value)
+		for _, ch := range token.Value {
+			if col < width {
+				termbox.SetCell(col, row, ch, fg, bg)
+				col++
+			}
+		}
 	}
-	if row == endRow && col >= endCol {
-			return false
+
+	for ; col < width; col++ {
+		termbox.SetCell(col, row, ' ', ui.TextForeground, ui.ColorBackground)
 	}
-	return true
 }

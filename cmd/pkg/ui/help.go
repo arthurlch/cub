@@ -5,7 +5,7 @@ import (
 )
 
 func ShowHelpModal() {
-	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+	termbox.Clear(termbox.ColorDefault, SoftBlack)
 
 	asciiArt := []string{
 		" ______     __  __     ______    ",
@@ -29,6 +29,8 @@ func ShowHelpModal() {
 		"v         : Paste selection",
 		"Arrow Keys: Navigation",
 		"o, p, k, l: Navigation (alternative keys)",
+		"",
+		"Tap any key to exit",
 	}
 
 	width, height := termbox.Size()
@@ -36,27 +38,25 @@ func ShowHelpModal() {
 	totalHeight := len(asciiArt) + len(shortcuts) + 2
 	startY := (height / 2) - (totalHeight / 2)
 
-	centerText := func(text string, y int) {
+	centerText := func(text string, y int, fgColor termbox.Attribute) {
 		x := (width / 2) - (len(text) / 2)
 		for i, ch := range text {
 			if x+i < width && y < height {
-				termbox.SetCell(x+i, y, ch, termbox.ColorWhite, termbox.ColorBlack)
+				termbox.SetCell(x+i, y, ch, fgColor, SoftBlack)
 			}
 		}
 	}
 
 	for i, line := range asciiArt {
-		centerText(line, startY+i)
+		centerText(line, startY+i, ModalTextColor)
 	}
 
 	for i, shortcut := range shortcuts {
-		centerText(shortcut, startY+len(asciiArt)+2+i)
+		centerText(shortcut, startY+len(asciiArt)+2+i, ModalTextColor)
 	}
 
 	termbox.Flush()
-
 	termbox.PollEvent()
-
-	termbox.Clear(termbox.ColorDefault, termbox.ColorBlack)
+	termbox.Clear(termbox.ColorDefault, SoftBlack)
 	termbox.Flush()
 }

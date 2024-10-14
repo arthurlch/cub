@@ -19,8 +19,9 @@ func TestInsertRunes(t *testing.T) {
 
 	es := &EditorState{State: st}
 	keyEvent := termbox.Event{Ch: '!'}
+	fileType := "go"
 
-	es.InsertRunes(keyEvent)
+	es.InsertRunes(keyEvent, fileType)
 
 	expectedBuffer := [][]rune{
 		[]rune("Hello!"),
@@ -40,7 +41,9 @@ func TestDeleteRune(t *testing.T) {
 	}
 
 	es := &EditorState{State: st}
-	es.DeleteRune()
+	fileType := "go"
+
+	es.DeleteRune(fileType)
 
 	expectedBuffer := [][]rune{
 		[]rune("Hello"),
@@ -61,7 +64,9 @@ func TestDeleteRuneAcrossLines(t *testing.T) {
 	}
 
 	es := &EditorState{State: st}
-	es.DeleteRune()
+	fileType := "go"
+
+	es.DeleteRune(fileType)
 
 	expectedBuffer := [][]rune{
 		[]rune("HelloWorld"),
@@ -82,7 +87,9 @@ func TestInsertNewLine(t *testing.T) {
 	}
 
 	es := &EditorState{State: st}
-	es.InsertNewLine()
+	fileType := "go"
+
+	es.InsertNewLine(fileType) 
 
 	expectedBuffer := [][]rune{
 		[]rune("Hello"),
@@ -105,7 +112,7 @@ func TestDeleteCurrentLine(t *testing.T) {
 		CurrentCol: 0,
 	}
 
-	deleteCurrentLine(st)
+	deleteCurrentLine(st) 
 
 	expectedBuffer := [][]rune{
 		[]rune("First line"),
@@ -126,10 +133,10 @@ func TestDeleteCurrentLineWhenLastLine(t *testing.T) {
 		CurrentCol: 5,
 	}
 
-	deleteCurrentLine(st)
+	deleteCurrentLine(st) 
 
 	expectedBuffer := [][]rune{
-		[]rune{},
+		{},
 	}
 	assert.Equal(t, expectedBuffer, st.TextBuffer, "TextBuffer should contain an empty line after deleting the last line")
 	assert.Equal(t, 0, st.CurrentRow, "CurrentRow should be reset to 0")

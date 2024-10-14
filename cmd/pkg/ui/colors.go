@@ -1,64 +1,40 @@
 package ui
 
 import (
-	"github.com/arthurlch/cub/cmd/pkg/syntax"
 	"github.com/nsf/termbox-go"
 )
 
-const (
-    ColorBackground   = termbox.ColorBlack
-    ColorForeground   = termbox.ColorWhite
-    ColorHighlight    = termbox.ColorMagenta
-    ColorPurple       = termbox.ColorMagenta
-    ColorGreen        = termbox.ColorGreen
-    ColorOrange       = termbox.ColorYellow
-    ColorRed          = termbox.ColorRed
-    ColorCyan         = termbox.ColorCyan
-		ColorBlack        = termbox.ColorBlack
-    ColorBlue         = termbox.ColorBlue
-    ColorPink         = termbox.ColorMagenta | termbox.AttrBold
+var (
+	SoftBlack     = termbox.RGBToAttribute(30, 30, 30)     
+	White         = termbox.RGBToAttribute(240, 240, 240)  
+	LightGray     = termbox.RGBToAttribute(180, 180, 180)  
+	Magenta       = termbox.RGBToAttribute(255, 85, 255)   
+	Green         = termbox.RGBToAttribute(120, 255, 120)  
+	Yellow        = termbox.RGBToAttribute(255, 215, 0)    
+	Red           = termbox.RGBToAttribute(255, 70, 70)    
+	Cyan          = termbox.RGBToAttribute(0, 255, 255)    
+	Blue          = termbox.RGBToAttribute(70, 130, 180)   
+	PinkBold      = termbox.RGBToAttribute(255, 105, 180)  
+	ColorDarkPink = termbox.RGBToAttribute(231, 84, 128)  
+	GoBlue        = termbox.RGBToAttribute(66, 165, 245)
 )
 
 var (
-    StatusBarForeground = termbox.ColorWhite
-    StatusBarBackground = ColorPurple
-    CursorForeground    = ColorBlack
-    CursorBackground    = ColorGreen
-    TextForeground      = ColorForeground
-    TextBackground      = ColorBackground
-    ColorKeyword        = ColorPink   
-    ColorString         = ColorGreen  
-    ColorComment        = ColorCyan   
-    ColorNumber         = ColorOrange 
-    ColorOperator       = ColorRed    
-    ColorDefault        = ColorForeground
+	ColorBackground     = SoftBlack
+	ColorForeground     = White
+	ColorHighlight      = Magenta
+	StatusBarForeground = White
+	StatusBarBackground = ColorDarkPink
+	CursorForeground    = SoftBlack
+	CursorBackground    = Green
+	TextForeground      = White  
+	TextBackground      = SoftBlack
+	ModalTextColor      = GoBlue
+
+	ColorKeyword  = PinkBold
+	ColorString   = Green
+	ColorComment  = LightGray
+	ColorNumber   = Yellow
+	ColorOperator = Red
+	ColorDefault  = White
 )
-
-func HighlightAndRenderLine(line string, y int) {
-	tokens := syntax.Tokenize(line)
-	x := 0
-	for _, token := range tokens {
-		var fg termbox.Attribute
-		switch token.Type {
-		case syntax.TokenKeyword:
-				fg = ColorKeyword
-		case syntax.TokenString:
-				fg = ColorString
-		case syntax.TokenComment:
-				fg = ColorComment
-		case syntax.TokenNumber:
-				fg = ColorNumber
-		case syntax.TokenOperator:
-				fg = ColorOperator
-		case syntax.TokenWhitespace:
-				fg = ColorDefault
-		default:
-				fg = ColorDefault
-		}
-
-		for _, ch := range token.Value {
-				termbox.SetCell(x, y, ch, fg, ColorBackground)
-				x++
-		}
-	}
-}
