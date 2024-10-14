@@ -1,3 +1,7 @@
+Here's the updated `README.md` with the changes you requested:
+
+---
+
 # Cub Text Editor
 
 <p align="center">
@@ -10,92 +14,134 @@
 
 ## Overview
 
-Cub is a terminal-based text editor designed for efficiency and simplicity. It offers two primary modes of operation: **View Mode** and **Insert Mode**. Users can navigate, edit, and manage text files with a set of intuitive keyboard shortcuts.
+**Cub** is a **lightweight, BLAZINGLY-FAST, terminal-based text editor** built for speed, simplicity, and precision. Inspired by the best features of Kakoune and Vim, Cub offers **intuitive keyboard navigation** that strikes a balance between **powerful functionality** and **ease of use**. Whether you're editing configuration files, writing code, or working on documentation, Cub's minimalist design helps you stay productive without unnecessary distractions.
+
+Cub operates with two streamlined modes:  
+- **View Mode**: Navigate, select, and manipulate text with precision.  
+- **Insert Mode**: Seamlessly edit and insert text where needed.  
+
+With **advanced navigation tools** such as **line jumps, word motions, and bracket matching**, Cub offers a superior text editing experience compared to traditional editors like Nano. It’s designed to fit into your workflow, offering **faster navigation**, **fewer keystrokes**, and **better text management**.
+
+Cub is perfect for developers, system administrators, and power users who need a **fast, no-frills editor** that maximizes efficiency without sacrificing simplicity.
 
 ---
 
-### **Modes**
-The text editor operates in two primary modes:
-1. **View Mode**: Allows you to navigate through the text, select/copy/cut, and delete lines.
-2. **Insert Mode**: Allows you to edit the text, inserting characters, spaces, tabs, and new lines.
+### **Navigation and Modes**
 
-You can switch between these modes using the appropriate keys.
+The navigation system in Cub follows a **Kakoune-like** style with some elements inspired by Vim motions. This provides powerful yet simple navigation, aiming to be more intuitive than Nano without introducing unnecessary complexity. Navigation is separated into **simple** and **complex** actions to align with the two modes (View and Insert).
 
 ---
 
-### **View Mode**
-View mode is used to navigate and perform line operations (e.g., delete, copy, cut). You can move around the document using navigation keys and perform basic text operations.
+### **Navigation Keys (View Mode)**
 
-#### **Shortcuts in View Mode:**
-
-- **Navigation**:
-  - **Arrow Keys (`↑`, `↓`, `←`, `→`) or `o`, `p`, `k`, `l`**: Move the cursor up, down, left, or right.
-  - **`Home`**: Move the cursor to the beginning of the current line.
-  - **`End`**: Move the cursor to the end of the current line.
-  - **`PgUp`**: Move the cursor up by a quarter of the screen.
-  - **`PgDn`**: Move the cursor down by a quarter of the screen.
-
-- **Selection and Clipboard**:
-  - **`s`**: Start selecting text.
-  - **`z`**: End text selection.
-  - **`c`**: Copy the selected text to the clipboard.
-  - **`x`**: Cut the selected text (remove it from the buffer and copy it to the clipboard).
-  - **`v`**: Paste the text from the clipboard at the current cursor position.
-
-- **Deleting Lines**:
-  - **`d d`**: Press `d` twice to delete the current line.
-
-#### **Undo/Redo in View Mode**:
-- **Undo (`Ctrl+U`)**: Undo the last change.
-- **Redo (`Ctrl+R`)**: Redo the last undone change.
+- **Arrow Keys (`↑`, `↓`, `←`, `→`) or `o`, `p`, `k`, `l`**: Move the cursor in all directions.
+- **`Home` / `End`**: Move to the start or end of the current line.
+- **`PgUp` / `PgDn`**: Scroll up or down by a quarter of the screen.
 
 ---
 
-### **Insert Mode**
-Insert mode allows you to modify the document by adding characters, spaces, tabs, or new lines. You can enter Insert mode from View mode by pressing `i`.
+### **Complex Navigation (View Mode)**  
+These advanced motions allow for more efficient movement throughout the document:
 
-#### **Shortcuts in Insert Mode:**
-
-- **Insert Characters**: Type any character to insert it at the current cursor position.
-- **Insert New Line** (`Enter`): Splits the current line at the cursor position and moves the part after the cursor to a new line.
-- **Insert Space** (`Space`): Inserts a space at the current cursor position.
-- **Insert Tab** (`Tab`): Inserts a tab (four spaces) at the current cursor position.
-- **Delete Character** (`Backspace`): Deletes the character before the cursor. If the cursor is at the beginning of a line, it merges the current line with the previous one.
-
-#### **Exiting Insert Mode**:
-- **Esc**: Exit Insert mode and return to View mode.
-
----
-
-### **Saving Files**
-You can save the document at any time with the following shortcut:
-- **Save (`Ctrl+S`)**: Saves the current document.
+- **Numbers (`0-9`)**: Build a line number to jump to.  
+- **`G`**: Jump to the line specified by the accumulated number, or the end of the document if no number is provided.  
+- **`w`**: Move to the **next word** boundary.  
+- **`b`**: Move to the **previous word** boundary.  
+- **`(` / `)`**: Move to the **matching bracket**.  
+- **`e`**: Jump to the **next empty line**.  
+- **`E`**: Jump to the **previous empty line**.  
+- **`^`**: Move to the **first non-whitespace character** of the current line.  
+- **`$`**: Move to the **end of the current line**.  
+- **`z`**: **Center** the cursor on the screen.  
+- **`g`**: Jump to the **top of the document** (line 0, column 0).  
 
 ---
 
-### **Exiting the Editor**
-To exit the editor, use the following shortcut:
-- **Exit (`Ctrl+Q`)**: Closes the editor.
+### **Insert Mode Navigation**
+
+While in **Insert Mode**, basic cursor navigation is still available:
+
+- **Arrow Keys**: Move the cursor in any direction.
+- **`Home` / `End`**: Jump to the beginning or end of the line.
+- **`PgUp` / `PgDn`**: Scroll the view up or down by a quarter of the screen.
+
+---
+
+### **Jump to Line Functionality**
+
+- **G + [number]**: Jump to the specified line. If no number is provided, it jumps to the **end of the document**.  
+  _(Example: Pressing `4G` moves the cursor to line 4.)_
+
+---
+
+### **Bracket Matching**
+
+Cub offers automatic navigation between matching brackets:
+
+- **`(` / `)`**: Jump between matching parentheses.  
+- **Supports both** round brackets (`()`), **and curly brackets** (`{}`).  
+
+---
+
+### **Page and Word Navigation**  
+
+- **Page Up / Down**: Move the view by a quarter of the visible screen.  
+- **`w` / `b`**: Jump forward to the next word boundary or backward to the previous one.  
+
+---
+
+### **Empty Line Detection**  
+These shortcuts help jump between empty lines, improving navigation within long documents:
+
+- **`e`**: Move to the next empty line.  
+- **`E`**: Move to the previous empty line.  
+
+---
+
+### **Centering the Cursor**
+
+- **`z`**: Centers the cursor vertically on the screen.  
+
+---
+
+### **Syntax Highlighting**
+
+Cub now supports syntax highlighting for the following languages:
+
+**A**: ABAP, ABNF, ActionScript, ActionScript 3, Ada, Agda, AL, Alloy, Angular2, ANTLR, ApacheConf, APL, AppleScript, ArangoDB AQL, Arduino, ArmAsm, AutoHotkey, AutoIt, Awk  
+**B**: Ballerina, Bash, Bash Session, Batchfile, BibTeX, Bicep, BlitzBasic, BNF, BQN, Brainfuck  
+**C**: C, C#, C++, Caddyfile, Caddyfile Directives, Cap'n Proto, Cassandra CQL, Ceylon, CFEngine3, cfstatement, ChaiScript, Chapel, Cheetah, Clojure, CMake, COBOL, CoffeeScript, Common Lisp, Coq, Crystal, CSS, Cython  
+**D**: D, Dart, Dax, Desktop Entry, Diff, Django/Jinja, dns, Docker, DTD, Dylan  
+**E**: EBNF, Elixir, Elm, EmacsLisp, Erlang  
+**F**: Factor, Fennel, Fish, Forth, Fortran, FortranFixed, FSharp  
+**G**: GAS, GDScript, Genshi, Genshi HTML, Genshi Text, Gherkin, Gleam, GLSL, Gnuplot, Go, Go HTML Template, Go Text Template, GraphQL, Groff, Groovy  
+**H**: Handlebars, Hare, Haskell, Haxe, HCL, Hexdump, HLB, HLSL, HolyC, HTML, HTTP, Hy  
+**I**: Idris, Igor, INI, Io, ISCdhcpd  
+**J**: J, Java, JavaScript, JSON, Julia, Jungle  
+**K**: Kotlin  
+**L**: Lighttpd configuration file, LLVM, Lua  
+**M**: Makefile, Mako, Markdown, Mason, Materialize SQL dialect, Mathematica, Matlab, MCFunction, Meson, Metal, MiniZinc, MLIR, Modula-2, MonkeyC, MorrowindScript, Myghty, MySQL  
+**N**: NASM, Natural, Newspeak, Nginx configuration file, Nim, Nix  
+**O**: Objective-C, OCaml, Octave, Odin, OnesEnterprise, OpenEdge ABL, OpenSCAD, Org Mode  
+**P**: PacmanConf, Perl, PHP, PHTML, Pig, PkgConfig, PL/pgSQL, plaintext, Plutus Core, Pony, PostgreSQL SQL dialect, PostScript, POVRay, PowerQuery, PowerShell, Prolog, PromQL, Promela, properties, Protocol Buffer, PRQL, PSL, Puppet, Python, Python 2  
+**Q**: QBasic, QML  
+**R**: R, Racket, Ragel, Raku, React, ReasonML, reg, Rego, reStructuredText, Rexx, RPMSpec, Ruby, Rust  
+**S**: SAS, Sass, Scala, Scheme, Scilab, SCSS, Sed, Sieve, Smali, Smalltalk, Smarty, SNBT, Snobol, Solidity, SourcePawn, SPARQL, SQL, SquidConf, Standard ML, Stas, Stylus, Svelte, Swift, SYSTEMD, SystemVerilog  
+**T**: TableGen, Tal, TASM, Tcl, Tcsh, Termcap, Terminfo, Terraform, TeX, Thrift, TOML, TradingView, Transact-SQL, Turing, Turtle, Twig, TypeScript, TypoScript, TypoScriptCssData, TypoScriptHtmlData, Typst  
+**V**: V, V Shell, Vala, VB.net, Verilog, VHDL, VHS, VimL, Vue  
+**W**: WDTE, WebGPU Shading Language, Whiley  
+**X**: XML, Xorg  
+**Y**: YAML, YANG  
+**Z**: Z80 Assembly, Zed, Zig
 
 ---
 
 ### **Example Workflow**
-1. **Open the editor**.
-2. **Navigate** through the text using the arrow keys or navigation shortcuts (e.g., `k` to move left, `l` to move right).
-3. **Switch to Insert Mode** by pressing `i`.
-4. **Edit** the document by typing text, pressing `Enter` to add new lines, or using `Space` to insert spaces.
-5. **Switch back to View Mode** by pressing `Esc`.
-6. **Delete a line** by pressing `d` twice in quick succession (`dd`).
-7. **Undo/Redo** changes using `Ctrl+U` and `Ctrl+R`.
-8. **Save** the document using `Ctrl+S`.
-9. **Exit** the editor using `Ctrl+Q`.
 
----
-
-### **Common Issues and Tips**
-- If you accidentally delete a line, you can undo it using `Ctrl+U`.
-- If you want to quickly move to the beginning or end of a line, use the `Home` or `End` keys.
-- If a large block of text needs to be deleted or moved, use the selection (`s` to start, `z` to end) and cut (`x`) or copy (`c`).
+1. **Open Cub** and **navigate** using arrow keys or `o`, `p`, `k`, `l`.  
+2. **Switch to Insert Mode** with `i` and type your text.  
+3. **Save** the document with `Ctrl+S`.  
+4. **Exit** the editor with `Ctrl+Q`.  
 
 ---
 
@@ -107,7 +153,24 @@ To install and build Cub, follow these steps:
 git clone https://github.com/yourusername/cub.git
 cd cub
 make build
+```
 
+---
 
-### Usage 
+## Usage
 
+After installation, start the editor by running:
+
+```bash
+./cub <filename>
+```
+
+---
+
+### **Common Issues and Tips**
+
+- If you accidentally delete a line, **undo** it using `Ctrl+U`.  
+- Use `Home` or `End` to jump to the beginning or end of a line.  
+- Use **selection (`s` to start, `z` to end)** for bulk operations like cut or copy.
+
+---
