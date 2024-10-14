@@ -1,7 +1,7 @@
 # Cub Text Editor
 
 <p align="center">
-  <img src="https://i.ibb.co/qpZMHns/logo-color.png" alt="Cub Logo" width="200" height="200">
+  <img src="https://i.ibb.co/88MWThZ/d9f9d3aa-2ae6-47d9-96bc-2735eda584f9.webp" alt="Cub Logo" width="300" height="300">
 </p>
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/arthurlch/cub)
