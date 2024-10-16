@@ -17,7 +17,9 @@ var (
 	PinkBold      = termbox.RGBToAttribute(255, 105, 180)  
 	ColorDarkPink = termbox.RGBToAttribute(231, 84, 128)  
 	GoBlue        = termbox.RGBToAttribute(66, 165, 245)
+	
 )
+
 
 var (
 	ColorBackground     = SoftBlack
@@ -30,6 +32,9 @@ var (
 	TextForeground      = White  
 	TextBackground      = SoftBlack
 	ModalTextColor      = GoBlue
+
+	SelectedBackground = termbox.ColorWhite
+	SelectedForeground = termbox.ColorWhite 
 
 	ColorKeyword  = PinkBold
 	ColorString   = Green

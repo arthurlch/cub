@@ -32,6 +32,14 @@ func handleViewModeKeyPress(st *state.State, keyEvent termbox.Event) {
 		} else {
 			st.LastKey = 'd'
 		}
+	case 'a':
+		if st.LastKey == 'a' {
+			selectAll(st) 
+			st.LastKey = 0
+		} else {
+			st.LastKey = 'a'
+		}
+
 	default:
 		handleSpecialKeys(st, keyEvent)
 		handleComplexNavigation(st, keyEvent)

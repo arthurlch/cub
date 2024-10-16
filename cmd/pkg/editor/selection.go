@@ -165,3 +165,18 @@ func deleteSelection(st *state.State) {
 
 	st.Modified = true
 }
+
+// missing select all 
+func selectAll(st *state.State) {
+
+	if len(st.TextBuffer) == 0 {
+		return 
+	}
+
+	st.StartRow = 0 
+	st.StartCol = 0 
+	st.EndRow = len(st.TextBuffer) - 1
+	st.EndCol = len(st.TextBuffer[st.StartRow])
+
+	st.SelectionActive = true 
+}
