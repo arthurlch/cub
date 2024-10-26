@@ -4,8 +4,7 @@ BINARY_NAME = cub
 OUTPUT_DIR = bin
 GOFLAGS = CGO_ENABLED=0
 
-PLATFORMS = macos-intel macos-arm windows linux
-GOOS_ARCH = darwin/amd64 darwin/arm64 windows/amd64 linux/amd64
+PLATFORMS = darwin-amd64 darwin-arm64 windows-amd64 linux-amd64
 
 all: build
 
