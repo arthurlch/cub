@@ -1,11 +1,14 @@
 #!/usr/bin/expect -f
 
+set github_actions [exec env | grep ^GITHUB_ACTIONS= | cut -d'=' -f2]
+set runner_os [exec env | grep ^RUNNER_OS= | cut -d'=' -f2]
+
 set binary_path "./bin/cub_linux-amd64"  ;# default for Linux
 
-if {[string equal $::env.GITHUB_ACTIONS "true"]} {
-    if {[string match {*darwin*} $::env.RUNNER_OS]} {
+if {$github_actions eq "true"} {
+    if {[string match {*darwin*} $runner_os]} {
         set binary_path "./bin/cub_darwin-amd64"
-    } elseif {[string match {*Windows*} $::env.RUNNER_OS]} {
+    } elseif {[string match {*Windows*} $runner_os]} {
         set binary_path "./bin/cub_windows-amd64"
     }
 } else {
