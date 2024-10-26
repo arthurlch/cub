@@ -45,7 +45,7 @@ func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 
 	if keyEvent.Ch == 'i' && st.Mode == state.ViewMode {
 		st.Mode = state.InsertMode
-		endSelection(st)
+		EndSelection(st)
 		if st.CurrentRow >= len(st.TextBuffer) {
 			st.CurrentRow = len(st.TextBuffer) - 1
 		}

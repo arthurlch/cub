@@ -9,7 +9,7 @@ import (
 func handleInsertModeKeyPress(es *EditorState, keyEvent termbox.Event) {
 	st := es.State
 
-	updateSelection(st)
+	UpdateSelection(st)
 
 	if len(st.TextBuffer) == 0 {
 		st.TextBuffer = append(st.TextBuffer, []rune{})

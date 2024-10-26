@@ -8,33 +8,33 @@ import (
 
 func handleViewModeKeyPress(st *state.State, keyEvent termbox.Event) {
 	if st.SelectionActive && (keyEvent.Key == termbox.KeyDelete || keyEvent.Key == termbox.KeyBackspace || keyEvent.Key == termbox.KeyBackspace2) {
-		deleteSelection(st)
+		DeleteSelection(st)
 		return
 	}
 
 	switch keyEvent.Ch {
 	case 's':
-		startSelection(st)
+		StartSelection(st)
 	case 'z':
-		endSelection(st)
+		EndSelection(st)
 	case 'c':
-		copySelection(st)
-		endSelection(st)
+		CopySelection(st)
+		EndSelection(st)
 	case 'x':
-		cutSelection(st)
-		endSelection(st)
+		CutSelection(st)
+		EndSelection(st)
 	case 'v':
-		pasteSelection(st)
+		PasteSelection(st)
 	case 'd':
 		if st.LastKey == 'd' {
-			deleteCurrentLine(st)
+			DeleteCurrentLine(st)
 			st.LastKey = 0
 		} else {
 			st.LastKey = 'd'
 		}
 	case 'a':
 		if st.LastKey == 'a' {
-			selectAll(st) 
+			SelectAll(st) 
 			st.LastKey = 0
 		} else {
 			st.LastKey = 'a'
@@ -46,7 +46,7 @@ func handleViewModeKeyPress(st *state.State, keyEvent termbox.Event) {
 	}
 
 	if st.SelectionActive && isNavigationKey(keyEvent) {
-		updateSelection(st)
+		UpdateSelection(st)
 	}
 
 	utils.AdjustCursorColToLineEnd(st)

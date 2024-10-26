@@ -5,7 +5,7 @@ import (
 	"github.com/arthurlch/cub/cmd/pkg/utils"
 )
 
-func startSelection(st *state.State) {
+func StartSelection(st *state.State) {
 	st.StartRow = st.CurrentRow
 	st.StartCol = st.CurrentCol
 	st.EndRow = st.CurrentRow
@@ -15,7 +15,7 @@ func startSelection(st *state.State) {
 		st.StartRow, st.StartCol, st.SelectionActive)
 }
 
-func updateSelection(st *state.State) {
+func UpdateSelection(st *state.State) {
 	st.EndRow = st.CurrentRow
 	st.EndCol = st.CurrentCol
 
@@ -26,12 +26,12 @@ func updateSelection(st *state.State) {
 	}
 }
 
-func endSelection(st *state.State) {
+func EndSelection(st *state.State) {
 	st.SelectionActive = false
 	utils.Logger.Println("End selection")
 }
 
-func copySelection(st *state.State) {
+func CopySelection(st *state.State) {
 	copyBuffer := []rune{}
 	startRow, endRow := st.StartRow, st.EndRow
 	startCol, endCol := st.StartCol, st.EndCol
@@ -61,14 +61,14 @@ func copySelection(st *state.State) {
 	utils.Logger.Printf("Copy selection - CopyBuffer length: %d", len(st.CopyBuffer))
 }
 
-func cutSelection(st *state.State) {
+func CutSelection(st *state.State) {
 	utils.Logger.Println("Cut selection - Start")
-	copySelection(st)
-	deleteSelection(st)
+	CopySelection(st)
+	DeleteSelection(st)
 	utils.Logger.Printf("Cut selection - Removed text length: %d", len(st.CopyBuffer))
 }
 
-func pasteSelection(st *state.State) {
+func PasteSelection(st *state.State) {
 	if len(st.CopyBuffer) > 0 {
 		st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
 			TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
@@ -117,7 +117,7 @@ func pasteSelection(st *state.State) {
 	}
 }
 
-func deleteSelection(st *state.State) {
+func DeleteSelection(st *state.State) {
 	st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
 		TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
 		CurrentRow: st.CurrentRow,
@@ -167,7 +167,7 @@ func deleteSelection(st *state.State) {
 }
 
 // missing select all 
-func selectAll(st *state.State) {
+func SelectAll(st *state.State) {
 
 	if len(st.TextBuffer) == 0 {
 		return 

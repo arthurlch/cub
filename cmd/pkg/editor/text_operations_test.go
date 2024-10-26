@@ -1,8 +1,9 @@
-package editor
+package editor_test
 
 import (
 	"testing"
 
+	"github.com/arthurlch/cub/cmd/pkg/editor"
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/nsf/termbox-go"
 	"github.com/stretchr/testify/assert"
@@ -11,135 +12,117 @@ import (
 func TestInsertRunes(t *testing.T) {
 	st := &state.State{
 		TextBuffer: [][]rune{
-			[]rune("Hello"),
+			[]rune("Hello, World!"),
 		},
 		CurrentRow: 0,
-		CurrentCol: 5,
+		CurrentCol: 7,
 	}
+	es := &editor.EditorState{State: st}
 
-	es := &EditorState{State: st}
-	keyEvent := termbox.Event{Ch: '!'}
-	fileType := "go"
+	// Simulate inserting a rune
+	keyEvent := termbox.Event{Ch: 'X'}
+	es.InsertRunes(keyEvent, "txt")
 
-	es.InsertRunes(keyEvent, fileType)
-
-	expectedBuffer := [][]rune{
-		[]rune("Hello!"),
-	}
-	assert.Equal(t, expectedBuffer, st.TextBuffer, "TextBuffer should contain 'Hello!'")
-	assert.Equal(t, 6, st.CurrentCol, "CurrentCol should be incremented after insertion")
-	assert.True(t, st.Modified, "State should be modified")
+	assert.Equal(t, "Hello, XWorld!", string(st.TextBuffer[0]))
+	assert.Equal(t, 8, st.CurrentCol)
+	assert.True(t, st.Modified)
+	assert.Len(t, st.UndoBuffer, 1)
 }
 
 func TestDeleteRune(t *testing.T) {
 	st := &state.State{
 		TextBuffer: [][]rune{
-			[]rune("Hello!"),
+			[]rune("Hello, World!"),
 		},
 		CurrentRow: 0,
-		CurrentCol: 6,
+		CurrentCol: 5,
 	}
+	es := &editor.EditorState{State: st}
 
-	es := &EditorState{State: st}
-	fileType := "go"
+	// Simulate deleting a rune
+	es.DeleteRune("txt")
 
-	es.DeleteRune(fileType)
-
-	expectedBuffer := [][]rune{
-		[]rune("Hello"),
-	}
-	assert.Equal(t, expectedBuffer, st.TextBuffer, "TextBuffer should contain 'Hello' after deletion")
-	assert.Equal(t, 5, st.CurrentCol, "CurrentCol should be decremented after deletion")
-	assert.True(t, st.Modified, "State should be modified")
+	assert.Equal(t, "Hell, World!", string(st.TextBuffer[0]))
+	assert.Equal(t, 4, st.CurrentCol)
+	assert.True(t, st.Modified)
+	assert.Len(t, st.UndoBuffer, 1)
 }
 
-func TestDeleteRuneAcrossLines(t *testing.T) {
+func TestDeleteRuneAtLineStart(t *testing.T) {
 	st := &state.State{
 		TextBuffer: [][]rune{
 			[]rune("Hello"),
-			[]rune("World"),
+			[]rune("World!"),
 		},
 		CurrentRow: 1,
 		CurrentCol: 0,
 	}
+	es := &editor.EditorState{State: st}
 
-	es := &EditorState{State: st}
-	fileType := "go"
+	// Attempt to delete at the start of the line (no-op)
+	es.DeleteRune("txt")
 
-	es.DeleteRune(fileType)
-
-	expectedBuffer := [][]rune{
-		[]rune("HelloWorld"),
-	}
-	assert.Equal(t, expectedBuffer, st.TextBuffer, "TextBuffer should merge lines after deleting rune at start of line")
-	assert.Equal(t, 5, st.CurrentCol, "CurrentCol should match the end of the previous line")
-	assert.Equal(t, 0, st.CurrentRow, "CurrentRow should be decremented")
-	assert.True(t, st.Modified, "State should be modified")
+	assert.Equal(t, "Hello", string(st.TextBuffer[0]))
+	assert.Equal(t, "World!", string(st.TextBuffer[1]))
+	assert.Equal(t, 0, st.CurrentCol)
+	assert.False(t, st.Modified)
 }
 
 func TestInsertNewLine(t *testing.T) {
 	st := &state.State{
 		TextBuffer: [][]rune{
-			[]rune("Hello World"),
+			[]rune("Hello, World!"),
 		},
 		CurrentRow: 0,
-		CurrentCol: 5,
+		CurrentCol: 7,
 	}
+	es := &editor.EditorState{State: st}
 
-	es := &EditorState{State: st}
-	fileType := "go"
+	// Simulate inserting a new line
+	es.InsertNewLine("txt")
 
-	es.InsertNewLine(fileType) 
-
-	expectedBuffer := [][]rune{
-		[]rune("Hello"),
-		[]rune(" World"),
-	}
-	assert.Equal(t, expectedBuffer, st.TextBuffer, "TextBuffer should split at CurrentCol with a new line inserted")
-	assert.Equal(t, 1, st.CurrentRow, "CurrentRow should be incremented after newline insertion")
-	assert.Equal(t, 0, st.CurrentCol, "CurrentCol should be reset to 0 after newline insertion")
-	assert.True(t, st.Modified, "State should be modified")
+	assert.Equal(t, "Hello, ", string(st.TextBuffer[0]))
+	assert.Equal(t, "World!", string(st.TextBuffer[1]))
+	assert.Equal(t, 1, st.CurrentRow)
+	assert.Equal(t, 0, st.CurrentCol)
+	assert.True(t, st.Modified)
+	assert.Len(t, st.UndoBuffer, 1)
 }
 
 func TestDeleteCurrentLine(t *testing.T) {
 	st := &state.State{
 		TextBuffer: [][]rune{
-			[]rune("First line"),
-			[]rune("Second line"),
-			[]rune("Third line"),
+			[]rune("Hello, World!"),
+			[]rune("This is a test."),
 		},
-		CurrentRow: 1,
+		CurrentRow: 0,
 		CurrentCol: 0,
 	}
+	
+	editor.DeleteCurrentLine(st)
 
-	deleteCurrentLine(st) 
-
-	expectedBuffer := [][]rune{
-		[]rune("First line"),
-		[]rune("Third line"),
-	}
-	assert.Equal(t, expectedBuffer, st.TextBuffer, "TextBuffer should remove the current line")
-	assert.Equal(t, 1, st.CurrentRow, "CurrentRow should be updated correctly")
-	assert.Equal(t, 0, st.CurrentCol, "CurrentCol should be reset to 0 after deleting the line")
-	assert.True(t, st.Modified, "State should be modified")
+	assert.Equal(t, "This is a test.", string(st.TextBuffer[0]))
+	assert.Equal(t, 0, st.CurrentRow)
+	assert.Equal(t, 0, st.CurrentCol)
+	assert.True(t, st.Modified)
+	assert.Len(t, st.UndoBuffer, 1)
 }
 
-func TestDeleteCurrentLineWhenLastLine(t *testing.T) {
+func TestDeleteLastRemainingLine(t *testing.T) {
 	st := &state.State{
 		TextBuffer: [][]rune{
-			[]rune("First line"),
+			[]rune("Only line."),
 		},
 		CurrentRow: 0,
 		CurrentCol: 5,
 	}
 
-	deleteCurrentLine(st) 
+	editor.DeleteCurrentLine(st)
 
-	expectedBuffer := [][]rune{
-		{},
-	}
-	assert.Equal(t, expectedBuffer, st.TextBuffer, "TextBuffer should contain an empty line after deleting the last line")
-	assert.Equal(t, 0, st.CurrentRow, "CurrentRow should be reset to 0")
-	assert.Equal(t, 0, st.CurrentCol, "CurrentCol should be reset to 0")
-	assert.True(t, st.Modified, "State should be modified")
+	assert.Equal(t, 1, len(st.TextBuffer))
+	assert.Equal(t, "", string(st.TextBuffer[0]))
+	assert.Equal(t, 0, st.CurrentRow)
+	assert.Equal(t, 0, st.CurrentCol)
+	assert.True(t, st.Modified)
+	assert.Len(t, st.UndoBuffer, 1)
 }

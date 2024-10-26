@@ -75,7 +75,7 @@ func (es *EditorState) InsertNewLine(fileType string) {
 	termbox.Flush()
 }
 
-func deleteCurrentLine(st *state.State) {
+func DeleteCurrentLine(st *state.State) {
 	if st.CurrentRow >= len(st.TextBuffer) {
 		return
 	}
