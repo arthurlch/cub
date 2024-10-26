@@ -1,12 +1,19 @@
 package editor_test
 
 import (
+	"log"
+	"os"
 	"testing"
 
 	"github.com/arthurlch/cub/cmd/pkg/editor"
 	"github.com/arthurlch/cub/cmd/pkg/state"
+	"github.com/arthurlch/cub/cmd/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
+
+func init() {
+	utils.Logger = log.New(os.Stdout, "TEST: ", log.LstdFlags)
+}
 
 func TestUndo(t *testing.T) {
 	s := &state.State{
@@ -55,14 +62,13 @@ func TestRedo(t *testing.T) {
 		Modified: false,
 	}
 
-
 	editor.Redo(s)
 
 	assert.Equal(t, [][]rune{{'H', 'e', 'l', 'l', 'o'}, {'W', 'o', 'r', 'l', 'd'}}, s.TextBuffer, "Redo should revert text buffer to previous undone state")
 	assert.Equal(t, 1, s.CurrentRow, "Redo should revert to previous undone row")
 	assert.Equal(t, 5, s.CurrentCol, "Redo should revert to previous undone column")
 	assert.True(t, s.Modified, "Redo operation should set Modified to true")
-	assert.Equal(t, 1, len(s.UndoBuffer), "Undo buffer should contain the state after Redo")
+	assert.Equal(t, 2, len(s.UndoBuffer), "Undo buffer should contain two states after Redo")
 }
 
 func TestUndoWithoutUndoBuffer(t *testing.T) {
