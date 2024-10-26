@@ -45,10 +45,37 @@ jobs:
       - name: Build binaries for testing
         run: make build-all
 
+      - name: Verify binaries and set paths
+        run: |
+          if [ ! -f ./bin/cub_darwin-amd64 ] || [ ! -f ./bin/cub_darwin-arm64 ] || \
+             [ ! -f ./bin/cub_windows-amd64 ] || [ ! -f ./bin/cub_linux-amd64 ]; then
+            echo "Error: One or more binaries are missing!"
+            exit 1
+          fi
+          echo "DARWIN_AMD64=./bin/cub_darwin-amd64" >> $GITHUB_ENV
+          echo "DARWIN_ARM64=./bin/cub_darwin-arm64" >> $GITHUB_ENV
+          echo "WINDOWS_AMD64=./bin/cub_windows-amd64" >> $GITHUB_ENV
+          echo "LINUX_AMD64=./bin/cub_linux-amd64" >> $GITHUB_ENV
+
       - name: Install Expect
         run: sudo apt-get install -y expect
 
-      - name: Run terminal-based tests with Expect
+      - name: Run terminal-based tests on Darwin (amd64)
         run: |
           chmod +x tests/expect_test.sh
-          ./tests/expect_test.sh
+          ./tests/expect_test.sh $DARWIN_AMD64
+
+      - name: Run terminal-based tests on Darwin (arm64)
+        run: |
+          chmod +x tests/expect_test.sh
+          ./tests/expect_test.sh $DARWIN_ARM64
+
+      - name: Run terminal-based tests on Windows (amd64)
+        run: |
+          chmod +x tests/expect_test.sh
+          ./tests/expect_test.sh $WINDOWS_AMD64
+
+      - name: Run terminal-based tests on Linux (amd64)
+        run: |
+          chmod +x tests/expect_test.sh
+          ./tests/expect_test.sh $LINUX_AMD64
