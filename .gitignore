@@ -1,6 +1,8 @@
 # Binaries for programs and plugins
 /bin/
 /build/
+build
+/build
 
 # Output of the go build command
 cub
