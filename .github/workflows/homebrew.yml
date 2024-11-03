@@ -1,0 +1,68 @@
+name: Homebrew Update
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  update-homebrew:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Homebrew Tap
+        uses: actions/checkout@v4
+        with:
+          repository: arthurlch/homebrew-cub
+          path: homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+      - name: Install GitHub CLI
+        run: |
+          type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh -y
+
+      - name: Authenticate GitHub CLI
+        run: echo "${{ secrets.HOMEBREW_TAP_TOKEN }}" | gh auth login --with-token
+
+      - name: Download Release Asset
+        run: |
+          RELEASE_ASSET_URL=$(gh release view ${{ github.event.release.tag_name }} --json assets -q '.assets[0].browser_download_url')
+          curl -L -o cub-binaries.zip "$RELEASE_ASSET_URL"
+
+      - name: Calculate SHA256
+        id: sha256
+        run: |
+          echo "hash=$(sha256sum cub-binaries.zip | awk '{ print $1 }')" >> $GITHUB_ENV
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Prepare Version Variable
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+        env:
+          GITHUB_REF_NAME: ${{ github.event.release.tag_name }}
+
+      - name: Update Homebrew Formula
+        run: |
+          sed -i "s/version \".*\"/version \"${VERSION}\"/" homebrew-tap/Casks/cub.rb
+          sed -i "s/sha256 \".*\"/sha256 \"${{ env.hash }}\"/" homebrew-tap/Casks/cub.rb
+          sed -i "s|url \".*\"|url \"https://github.com/arthurlch/cub/releases/download/${GITHUB_REF_NAME}/cub-binaries-${GITHUB_REF_NAME}.zip\"|" homebrew-tap/Casks/cub.rb
+        env:
+          VERSION: ${{ env.VERSION }}
+          GITHUB_REF_NAME: ${{ github.event.release.tag_name }}
+
+      - name: Commit and Push Changes
+        run: |
+          cd homebrew-tap
+          git add Casks/cub.rb
+          git commit -m "Update cub to version ${VERSION}"
+          git push origin main
