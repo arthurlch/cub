@@ -1,4 +1,4 @@
-name: github release
+name: GitHub Release
 
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
       - name: Calculate SHA256
         id: sha256
         run: |
-          echo "hash=$(sha256sum release/cub-binaries-${GITHUB_REF_NAME}.zip | awk '{ print $1 }')" >> $GITHUB_ENV
+          echo "HASH=$(sha256sum release/cub-binaries-${GITHUB_REF_NAME}.zip | awk '{ print $1 }')" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         id: create_release
