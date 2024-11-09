@@ -24,7 +24,7 @@ jobs:
           repository: arthurlch/homebrew-cub
           path: homebrew-tap
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          
+
       - name: Install GitHub CLI
         run: |
           type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
@@ -35,24 +35,14 @@ jobs:
           sudo apt install gh -y
 
       - name: Authenticate GitHub CLI
-        run: |
-          cd ${{ github.workspace }}
-          echo "${{ secrets.HOMEBREW_TAP_TOKEN }}" | gh auth login --with-token
-      
+        run: echo "${{ secrets.HOMEBREW_TAP_TOKEN }}" | gh auth login --with-token
+
       - name: Download Release Asset
         run: |
-          cd ${{ github.workspace }}
-          echo "Fetching release information for tag: ${{ github.event.release.tag_name }}"
-          gh release view ${{ github.event.release.tag_name }} --json assets -q '.assets'
-          
+          cd cub
           RELEASE_ASSET_URL=$(gh release view ${{ github.event.release.tag_name }} --json assets -q '.assets[0].browser_download_url')
-          if [ -z "$RELEASE_ASSET_URL" ]; then
-            echo "Error: No assets found for release ${{ github.event.release.tag_name }}"
-            exit 1
-          fi
-          
           curl -L -o cub-binaries.zip "$RELEASE_ASSET_URL"
-                
+
       - name: Calculate SHA256
         id: sha256
         run: |
@@ -62,12 +52,6 @@ jobs:
       - name: Set up Git
         run: |
           cd homebrew-tap
-          if [ ! -d ".git" ]; then
-            git init
-            git remote add origin https://github.com/arthurlch/homebrew-cub.git
-            git fetch
-            git checkout main
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
