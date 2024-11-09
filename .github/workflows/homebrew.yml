@@ -12,6 +12,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Main Repository
+        uses: actions/checkout@v4
+        with:
+          path: cub
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Checkout Homebrew Tap
         uses: actions/checkout@v4
         with:
@@ -50,6 +56,7 @@ jobs:
       - name: Calculate SHA256
         id: sha256
         run: |
+          cd cub
           echo "hash=$(sha256sum cub-binaries.zip | awk '{ print $1 }')" >> $GITHUB_ENV
 
       - name: Set up Git
@@ -71,9 +78,10 @@ jobs:
 
       - name: Update Homebrew Formula
         run: |
-          sed -i "s/version \".*\"/version \"${VERSION}\"/" homebrew-tap/Casks/cub.rb
-          sed -i "s/sha256 \".*\"/sha256 \"${{ env.hash }}\"/" homebrew-tap/Casks/cub.rb
-          sed -i "s|url \".*\"|url \"https://github.com/arthurlch/cub/releases/download/${GITHUB_REF_NAME}/cub-binaries-${GITHUB_REF_NAME}.zip\"|" homebrew-tap/Casks/cub.rb
+          cd homebrew-tap
+          sed -i "s/version \".*\"/version \"${VERSION}\"/" Casks/cub.rb
+          sed -i "s/sha256 \".*\"/sha256 \"${{ env.hash }}\"/" Casks/cub.rb
+          sed -i "s|url \".*\"|url \"https://github.com/arthurlch/cub/releases/download/${GITHUB_REF_NAME}/cub-binaries-${GITHUB_REF_NAME}.zip\"|" Casks/cub.rb
         env:
           VERSION: ${{ env.VERSION }}
           GITHUB_REF_NAME: ${{ github.event.release.tag_name }}
