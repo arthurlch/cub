@@ -45,9 +45,9 @@ jobs:
         run: |
           cd cub
           ASSET_NAME="cub-binaries-${{ github.event.release.tag_name }}.zip"
-          RELEASE_ASSET_URL=$(gh release view ${{ github.event.release.tag_name }} --json assets -q '.assets[] | select(.name == "'$ASSET_NAME'") | .browser_download_url')
-          echo "Release Asset URL: $RELEASE_ASSET_URL"
-          curl -L -o cub-binaries.zip "$RELEASE_ASSET_URL"
+          DOWNLOAD_URL="https://github.com/arthurlch/cub/releases/download/${{ github.event.release.tag_name }}/$ASSET_NAME"
+          echo "Download URL: $DOWNLOAD_URL"
+          curl -L -o cub-binaries.zip "$DOWNLOAD_URL"
       
       - name: Calculate SHA256
         id: sha256
