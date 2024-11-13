@@ -32,6 +32,19 @@ else
 endif
 
 PLATFORMS = darwin-amd64 darwin-arm64 windows-amd64 linux-amd64
+INSTALL_DIR_DARWIN = /usr/local/bin
+INSTALL_DIR_LINUX = /usr/local/bin
+INSTALL_DIR_WINDOWS = %USERPROFILE%\AppData\Local\Microsoft\WindowsApps
+HOME_DIR = $(shell echo $$HOME)
+HOME_BIN_DIR = $(HOME_DIR)/bin
+
+# Detect OS and Architecture
+ifeq ($(OS),Windows_NT)
+	DETECTED_OS := windows
+else
+	DETECTED_OS := $(shell uname -s | tr A-Z a-z)
+	DETECTED_ARCH := $(shell uname -m)
+endif
 
 all: build
 
