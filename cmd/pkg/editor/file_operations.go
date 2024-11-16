@@ -2,6 +2,8 @@ package editor
 
 import (
 	"bufio"
+	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -24,11 +26,23 @@ func (es *EditorState) ReadFile(filename string) error {
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		st.TextBuffer = append(st.TextBuffer, []rune(line))
+	const bufferSize = 64 * 1024 // 64KB buffer
+	reader := bufio.NewReaderSize(file, bufferSize)
+	
+	var buffer bytes.Buffer
+	_, err = io.Copy(&buffer, reader)
+	if err != nil {
+		return err
 	}
+
+	lines := bytes.Split(buffer.Bytes(), []byte{'\n'})
+	
+	st.TextBuffer = make([][]rune, 0, len(lines))
+	
+	for _, line := range lines {
+		st.TextBuffer = append(st.TextBuffer, bytes.Runes(line))
+	}
+
 	if len(st.TextBuffer) == 0 {
 		st.TextBuffer = append(st.TextBuffer, []rune{})
 	}
@@ -40,7 +54,7 @@ func (es *EditorState) ReadFile(filename string) error {
 		CurrentCol: st.CurrentCol,
 	})
 
-	return scanner.Err()
+	return nil
 }
 
 func (es *EditorState) SaveFile() error {
@@ -68,14 +82,29 @@ func (es *EditorState) SaveFile() error {
 	}
 	defer file.Close()
 
-	writer := bufio.NewWriter(file)
-	for _, line := range st.TextBuffer {
-		_, err := writer.WriteString(string(line) + "\n")
-		if err != nil {
-			return err
+	const writeBufferSize = 64 * 1024 // 64KB buffer
+	writer := bufio.NewWriterSize(file, writeBufferSize)
+	
+	var buffer bytes.Buffer
+	buffer.Grow(1024) 
+
+	for i, line := range st.TextBuffer {
+		buffer.WriteString(string(line))
+		if i < len(st.TextBuffer)-1 {
+			buffer.WriteByte('\n')
 		}
 	}
-	writer.Flush()
+
+	_, err = writer.Write(buffer.Bytes())
+	if err != nil {
+		return err
+	}
+
+	err = writer.Flush()
+	if err != nil {
+		return err
+	}
+
 	st.Modified = false
 	return nil
 }
