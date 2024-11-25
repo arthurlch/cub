@@ -6,9 +6,17 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/arthurlch/cub/cmd/pkg/utils"
+)
+
+var (
+	markdownImageRegex = regexp.MustCompile(`!\[.*?\]\(.*?\)`)
+	htmlImageRegex    = regexp.MustCompile(`<img.*?>`)
+	plainTextFileTypes = []string{"md", "sum", "makefile"}
 )
 
 func (es *EditorState) ReadFile(filename string) error {
@@ -28,26 +36,42 @@ func (es *EditorState) ReadFile(filename string) error {
 
 	const bufferSize = 64 * 1024 // 64KB buffer
 	reader := bufio.NewReaderSize(file, bufferSize)
-	
-	var buffer bytes.Buffer
-	_, err = io.Copy(&buffer, reader)
-	if err != nil {
-		return err
+
+	st.TextBuffer = [][]rune{}
+	var lineBuffer bytes.Buffer
+
+	fileType := strings.ToLower(filepath.Ext(filename))
+	if fileType != "" {
+		fileType = fileType[1:]
 	}
 
-	lines := bytes.Split(buffer.Bytes(), []byte{'\n'})
-	
-	st.TextBuffer = make([][]rune, 0, len(lines))
-	
-	for _, line := range lines {
-		st.TextBuffer = append(st.TextBuffer, bytes.Runes(line))
+	isPlainText := isPlainTextFileType(fileType)
+
+	for {
+		line, isPrefix, err := reader.ReadLine()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		lineBuffer.Write(line)
+		if !isPrefix {
+			processedLine := lineBuffer.String()
+			if !isPlainText {
+				processedLine = replaceImageTags(processedLine)
+			}
+			st.TextBuffer = append(st.TextBuffer, []rune(processedLine))
+			lineBuffer.Reset()
+		}
 	}
 
 	if len(st.TextBuffer) == 0 {
 		st.TextBuffer = append(st.TextBuffer, []rune{})
 	}
 	st.SourceFile = filename
-	
+
 	st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
 		TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
 		CurrentRow: st.CurrentRow,
@@ -55,6 +79,21 @@ func (es *EditorState) ReadFile(filename string) error {
 	})
 
 	return nil
+}
+
+func replaceImageTags(line string) string {
+	line = markdownImageRegex.ReplaceAllString(line, "[Image Placeholder]")
+	line = htmlImageRegex.ReplaceAllString(line, "[Image Placeholder]")
+	return line
+}
+
+func isPlainTextFileType(fileType string) bool {
+	for _, plainType := range plainTextFileTypes {
+		if fileType == plainType {
+			return true
+		}
+	}
+	return false
 }
 
 func (es *EditorState) SaveFile() error {
@@ -84,24 +123,19 @@ func (es *EditorState) SaveFile() error {
 
 	const writeBufferSize = 64 * 1024 // 64KB buffer
 	writer := bufio.NewWriterSize(file, writeBufferSize)
-	
-	var buffer bytes.Buffer
-	buffer.Grow(1024) 
 
 	for i, line := range st.TextBuffer {
-		buffer.WriteString(string(line))
+		if _, err := writer.WriteString(string(line)); err != nil {
+			return err
+		}
 		if i < len(st.TextBuffer)-1 {
-			buffer.WriteByte('\n')
+			if err := writer.WriteByte('\n'); err != nil {
+				return err
+			}
 		}
 	}
 
-	_, err = writer.Write(buffer.Bytes())
-	if err != nil {
-		return err
-	}
-
-	err = writer.Flush()
-	if err != nil {
+	if err := writer.Flush(); err != nil {
 		return err
 	}
 
