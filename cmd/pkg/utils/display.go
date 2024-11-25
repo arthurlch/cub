@@ -11,13 +11,8 @@ import (
 )
 
 var plainTextExtensions = map[string]bool{
-	"md":   true,
-	"sum":  true,
-	"txt":  true,
-	"log":  true,
-	"yaml": true,
-	"json": true,
-	"toml": true,
+	"sum": true,
+	"log": true,
 }
 
 func DisplayTextBuffer(s *state.State, fileType string) {
@@ -33,14 +28,14 @@ func DisplayTextBuffer(s *state.State, fileType string) {
 	for row := 0; row < height; row++ {
 		lineIndex := row + s.OffsetRow
 		if lineIndex >= len(s.TextBuffer) {
-			break 
+			break
 		}
 
 		line := string(s.TextBuffer[lineIndex])
 		renderHighlightedLine(line, row, width, lexer, s, lineIndex)
 	}
 
-	termbox.Flush() 
+	termbox.Flush()
 }
 
 func isPlainTextFile(fileType string) bool {
@@ -85,7 +80,7 @@ func renderHighlightedLine(line string, row, width int, lexer chroma.Lexer, s *s
 		fg, bg := syntax.GetTermboxColor(token.Type, token.Value)
 		for _, ch := range token.Value {
 			if col >= width {
-				return 
+				return
 			}
 
 			if col >= startCol && col < endCol {

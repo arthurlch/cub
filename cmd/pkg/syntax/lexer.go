@@ -20,12 +20,12 @@ func GetTermboxColor(tokenType chroma.TokenType, tokenValue string) (termbox.Att
 
     switch tokenType.Category() {
     case chroma.Keyword:
-        return ui.Magenta, bg
+        return ui.Blue, bg
     case chroma.Name:
         if tokenType == chroma.NameFunction {
-            return ui.Blue, bg
+            return ui.Yellow, bg
         }
-        return ui.Cyan, bg
+        return ui.White, bg
     case chroma.String:
         return ui.PinkBold, bg
     case chroma.Number:
