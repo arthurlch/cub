@@ -42,4 +42,5 @@ type State struct {
 	MessageTimestamp time.Time
 	LastKey          rune
 	LineNumberBuffer string
+	Language    string
 }

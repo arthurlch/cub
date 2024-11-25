@@ -3,7 +3,7 @@ package utils
 import (
 	"strings"
 
-	"github.com/alecthomas/chroma"
+	"github.com/alecthomas/chroma/v2"
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/arthurlch/cub/cmd/pkg/syntax"
 	"github.com/arthurlch/cub/cmd/pkg/ui"
@@ -11,19 +11,13 @@ import (
 )
 
 var plainTextExtensions = map[string]bool{
-	"md":       true,
-	"sum":      true,
-	"makefile": true,
-	"lock":     true,
-	"txt":      true,
-	"log":      true,
-	"conf":     true,
-	"config":   true,
-	"yml":      true,
-	"yaml":     true,
-	"json":     true,
-	"toml":     true,
-	"env":      true,
+	"md":   true,
+	"sum":  true,
+	"txt":  true,
+	"log":  true,
+	"yaml": true,
+	"json": true,
+	"toml": true,
 }
 
 func DisplayTextBuffer(s *state.State, fileType string) {
@@ -36,32 +30,30 @@ func DisplayTextBuffer(s *state.State, fileType string) {
 	}
 
 	lexer := syntax.GetLexer(fileType)
-
 	for row := 0; row < height; row++ {
-		if row+s.OffsetRow >= len(s.TextBuffer) {
-			break
+		lineIndex := row + s.OffsetRow
+		if lineIndex >= len(s.TextBuffer) {
+			break 
 		}
 
-		lineIndex := row + s.OffsetRow
 		line := string(s.TextBuffer[lineIndex])
 		renderHighlightedLine(line, row, width, lexer, s, lineIndex)
 	}
 
-	termbox.Flush()
+	termbox.Flush() 
 }
 
 func isPlainTextFile(fileType string) bool {
-	fileType = strings.ToLower(fileType)
-	return plainTextExtensions[fileType]
+	return plainTextExtensions[strings.ToLower(fileType)]
 }
 
 func displayPlainTextBuffer(s *state.State, width, height int) {
 	for row := 0; row < height; row++ {
-		if row+s.OffsetRow >= len(s.TextBuffer) {
+		lineIndex := row + s.OffsetRow
+		if lineIndex >= len(s.TextBuffer) {
 			break
 		}
 
-		lineIndex := row + s.OffsetRow
 		line := string(s.TextBuffer[lineIndex])
 		startCol, endCol := getSelectionBounds(s, lineIndex, len(line))
 
@@ -93,13 +85,13 @@ func renderHighlightedLine(line string, row, width int, lexer chroma.Lexer, s *s
 		fg, bg := syntax.GetTermboxColor(token.Type, token.Value)
 		for _, ch := range token.Value {
 			if col >= width {
-				return
+				return 
 			}
 
 			if col >= startCol && col < endCol {
-				termbox.SetCell(col, row, ch, ui.SoftBlack, ui.SelectedBackground)
+				termbox.SetCell(col, row, rune(ch), ui.SoftBlack, ui.SelectedBackground)
 			} else {
-				termbox.SetCell(col, row, ch, fg, bg)
+				termbox.SetCell(col, row, rune(ch), fg, bg)
 			}
 			col++
 		}

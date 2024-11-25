@@ -9,13 +9,15 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/alecthomas/chroma/v2"
+	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/arthurlch/cub/cmd/pkg/utils"
 )
 
 var (
 	markdownImageRegex = regexp.MustCompile(`!\[.*?\]\(.*?\)`)
-	htmlImageRegex    = regexp.MustCompile(`<img.*?>`)
+	htmlImageRegex     = regexp.MustCompile(`<img.*?>`)
 	plainTextFileTypes = []string{"md", "sum", "makefile"}
 )
 
@@ -45,7 +47,13 @@ func (es *EditorState) ReadFile(filename string) error {
 		fileType = fileType[1:]
 	}
 
-	isPlainText := isPlainTextFileType(fileType)
+	lexer := lexers.Match(filename)
+	if lexer != nil {
+		lexer = chroma.Coalesce(lexer)
+		st.Language = lexer.Config().Name
+	} else {
+		st.Language = "Plain Text"
+	}
 
 	for {
 		line, isPrefix, err := reader.ReadLine()
@@ -59,10 +67,10 @@ func (es *EditorState) ReadFile(filename string) error {
 		lineBuffer.Write(line)
 		if !isPrefix {
 			processedLine := lineBuffer.String()
-			if !isPlainText {
+			if !isPlainTextFileType(fileType) {
 				processedLine = replaceImageTags(processedLine)
 			}
-			st.TextBuffer = append(st.TextBuffer, []rune(processedLine))
+			st.TextBuffer = append(st.TextBuffer, []rune(processedLine)) // Store raw text
 			lineBuffer.Reset()
 		}
 	}
