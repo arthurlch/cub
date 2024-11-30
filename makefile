@@ -1,4 +1,4 @@
-.PHONY: help build build-all deps clean install uninstall verify-path
+.PHONY: help build build-all deps clean install uninstall verify-path update
 
 BINARY_NAME = cub
 OUTPUT_DIR = bin
@@ -57,6 +57,7 @@ help:
 	@echo "  install           Install the binary to $(INSTALL_DIR)"
 	@echo "  uninstall         Remove the binary from $(INSTALL_DIR)"
 	@echo "  verify-path       Verify $(INSTALL_DIR) is in PATH"
+	@echo "  update            Fetch and update to the latest changes from master branch"
 	@echo "  help              Show this help message"
 
 build: deps
@@ -120,3 +121,9 @@ else
 	@$(SUDO_CMD) rm -f $(INSTALL_DIR)/$(BINARY_NAME)
 endif
 	@echo "Uninstallation complete."
+
+update:
+	@echo "Fetching latest changes from the master branch..."
+	git fetch origin master
+	git reset --hard origin/master
+	@echo "Project updated to the latest version on master branch."
