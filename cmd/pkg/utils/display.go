@@ -6,7 +6,7 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/arthurlch/cub/cmd/pkg/syntax"
-	"github.com/arthurlch/cub/cmd/pkg/ui"
+	"github.com/arthurlch/cub/cmd/pkg/theme"
 	"github.com/nsf/termbox-go"
 )
 
@@ -58,12 +58,12 @@ func displayPlainTextBuffer(s *state.State, width, height int) {
 				ch = rune(line[col])
 			}
 
-			fg := ui.TextForeground
-			bg := ui.ColorBackground
+			fg := theme.TextForeground
+			bg := theme.ColorBackground
 
 			if startCol != -1 && col >= startCol && col < endCol {
-				fg = ui.SoftBlack
-				bg = ui.SelectedBackground
+				fg = theme.SoftBlack
+				bg = theme.SelectedBackground
 			}
 
 			termbox.SetCell(col, row, ch, fg, bg)
@@ -84,7 +84,7 @@ func renderHighlightedLine(line string, row, width int, lexer chroma.Lexer, s *s
 			}
 
 			if col >= startCol && col < endCol {
-				termbox.SetCell(col, row, rune(ch), ui.SoftBlack, ui.SelectedBackground)
+				termbox.SetCell(col, row, rune(ch), theme.SoftBlack, theme.SelectedBackground)
 			} else {
 				termbox.SetCell(col, row, rune(ch), fg, bg)
 			}
@@ -93,7 +93,7 @@ func renderHighlightedLine(line string, row, width int, lexer chroma.Lexer, s *s
 	}
 
 	for ; col < width; col++ {
-		termbox.SetCell(col, row, ' ', ui.TextForeground, ui.ColorBackground)
+		termbox.SetCell(col, row, ' ', theme.TextForeground, theme.ColorBackground)
 	}
 }
 

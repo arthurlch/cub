@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/arthurlch/cub/cmd/pkg/state"
+	"github.com/arthurlch/cub/cmd/pkg/theme"
 	"github.com/mattn/go-runewidth"
 	"github.com/nsf/termbox-go"
 )
@@ -47,7 +48,7 @@ func (es *EditorState) StatusBar() {
 
 	fullStatusBar := leftStatus + strings.Repeat(" ", padding) + rightStatus
 
-	printMessage(0, st.Rows, StatusBarForeground, StatusBarBackground, fullStatusBar)
+	printMessage(0, st.Rows, theme.StatusBarForeground, theme.StatusBarBackground, fullStatusBar)
 }
 
 func printMessage(col, row int, foreground, background termbox.Attribute, message string) {

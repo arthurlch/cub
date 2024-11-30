@@ -1,11 +1,12 @@
 package ui
 
 import (
+	"github.com/arthurlch/cub/cmd/pkg/theme"
 	"github.com/nsf/termbox-go"
 )
 
 func ShowHelpModal() {
-	termbox.Clear(termbox.ColorDefault, SoftBlack)
+	termbox.Clear(termbox.ColorDefault, theme.SoftBlack)
 
 	asciiArt := []string{
 		" ______     __  __     ______    ",
@@ -42,21 +43,21 @@ func ShowHelpModal() {
 		x := (width / 2) - (len(text) / 2)
 		for i, ch := range text {
 			if x+i < width && y < height {
-				termbox.SetCell(x+i, y, ch, fgColor, SoftBlack)
+				termbox.SetCell(x+i, y, ch, fgColor, theme.SoftBlack)
 			}
 		}
 	}
 
 	for i, line := range asciiArt {
-		centerText(line, startY+i, ModalTextColor)
+		centerText(line, startY+i, theme.ModalTextColor)
 	}
 
 	for i, shortcut := range shortcuts {
-		centerText(shortcut, startY+len(asciiArt)+2+i, ModalTextColor)
+		centerText(shortcut, startY+len(asciiArt)+2+i, theme.ModalTextColor)
 	}
 
 	termbox.Flush()
 	termbox.PollEvent()
-	termbox.Clear(termbox.ColorDefault, SoftBlack)
+	termbox.Clear(termbox.ColorDefault, theme.SoftBlack)
 	termbox.Flush()
 }
