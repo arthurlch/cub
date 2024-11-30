@@ -3,7 +3,7 @@ package syntax
 import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
-	"github.com/arthurlch/cub/cmd/pkg/ui"
+	"github.com/arthurlch/cub/cmd/pkg/theme"
 	"github.com/nsf/termbox-go"
 )
 
@@ -16,25 +16,25 @@ func GetLexer(fileType string) chroma.Lexer {
 }
 
 func GetTermboxColor(tokenType chroma.TokenType, tokenValue string) (termbox.Attribute, termbox.Attribute) {
-    bg := ui.TextBackground
+    bg := theme.TextBackground
 
     switch tokenType.Category() {
     case chroma.Keyword:
-        return ui.Blue, bg
+        return theme.Blue, bg
     case chroma.Name:
         if tokenType == chroma.NameFunction {
-            return ui.Yellow, bg
+            return theme.Yellow, bg
         }
-        return ui.White, bg
+        return theme.White, bg
     case chroma.String:
-        return ui.PinkBold, bg
+        return theme.PinkBold, bg
     case chroma.Number:
-        return ui.Yellow, bg
+        return theme.Yellow, bg
     case chroma.Comment:
-        return ui.LightGray, bg
+        return theme.LightGray, bg
     case chroma.Operator, chroma.Punctuation:
-        return ui.Red, bg
+        return theme.Red, bg
     default:
-        return ui.White, bg
+        return theme.White, bg
     }
 }
