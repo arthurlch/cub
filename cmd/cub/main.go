@@ -8,6 +8,7 @@ import (
 	"github.com/arthurlch/cub/cmd/pkg/editor"
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/arthurlch/cub/cmd/pkg/ui"
+	"github.com/arthurlch/cub/cmd/pkg/theme"
 	"github.com/arthurlch/cub/cmd/pkg/utils"
 	"github.com/nsf/termbox-go"
 )
@@ -76,7 +77,7 @@ func mainLoop(sharedState *state.State, uiState *ui.EditorState, editorState *ed
 
 // filetype not used but likely to be used later on
 func redraw(sharedState *state.State, uiState *ui.EditorState, fileType string) {
-	termbox.Clear(ui.TextForeground, ui.ColorBackground)
+	termbox.Clear(theme.TextForeground,theme.ColorBackground)
 	utils.ScrollTextBuffer(sharedState)
 	utils.DisplayTextBuffer(sharedState, fileType) 
 	uiState.StatusBar()
