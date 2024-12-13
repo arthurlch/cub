@@ -7,6 +7,7 @@ import (
 
 	"github.com/arthurlch/cub/cmd/pkg/editor"
 	"github.com/arthurlch/cub/cmd/pkg/state"
+	"github.com/arthurlch/cub/cmd/pkg/theme"
 	"github.com/arthurlch/cub/cmd/pkg/ui"
 	"github.com/arthurlch/cub/cmd/pkg/theme"
 	"github.com/arthurlch/cub/cmd/pkg/utils"
@@ -77,14 +78,18 @@ func mainLoop(sharedState *state.State, uiState *ui.EditorState, editorState *ed
 
 // filetype not used but likely to be used later on
 func redraw(sharedState *state.State, uiState *ui.EditorState, fileType string) {
-	termbox.Clear(theme.TextForeground,theme.ColorBackground)
+	termbox.Clear(theme.TextForeground, theme.ColorBackground)
 	utils.ScrollTextBuffer(sharedState)
 	utils.DisplayTextBuffer(sharedState, fileType) 
 	uiState.StatusBar()
+	uiState.RenderLineNumbers()
 	termbox.SetCursor(sharedState.CurrentCol-sharedState.OffsetCol, sharedState.CurrentRow-sharedState.OffsetRow)
 	termbox.Flush() 
 	uiState.StatusBar()
-	termbox.SetCursor(sharedState.CurrentCol-sharedState.OffsetCol, sharedState.CurrentRow-sharedState.OffsetRow)
+	cursorCol := sharedState.CurrentCol - sharedState.OffsetCol + utils.LineNumberWidth
+	cursorRow := sharedState.CurrentRow - sharedState.OffsetRow
+
+	termbox.SetCursor(cursorCol, cursorRow)
 	termbox.Flush()
 }
 

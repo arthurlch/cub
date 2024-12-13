@@ -1,4 +1,4 @@
-# Cub Text Editor
+# -- Cub Text Editor --
 
 <p align="center">
   <img src="https://i.ibb.co/88MWThZ/d9f9d3aa-2ae6-47d9-96bc-2735eda584f9.webp" alt="Cub Logo" width="300" height="300">
@@ -91,12 +91,6 @@ These shortcuts help jump between empty lines, improving navigation within long 
 
 - **`e`**: Move to the next empty line.  
 - **`E`**: Move to the previous empty line.  
-
----
-
-### **Centering the Cursor**
-
-- **`z`**: Centers the cursor vertically on the screen.  
 
 ---
 

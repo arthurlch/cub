@@ -18,7 +18,7 @@ import (
 var (
 	markdownImageRegex = regexp.MustCompile(`!\[.*?\]\(.*?\)`)
 	htmlImageRegex     = regexp.MustCompile(`<img.*?>`)
-	plainTextFileTypes = []string{"md", "sum", "makefile"}
+	plainTextFileTypes = []string{"md", "sum", "makefile", "log"}
 )
 
 func (es *EditorState) ReadFile(filename string) error {
@@ -70,7 +70,7 @@ func (es *EditorState) ReadFile(filename string) error {
 			if !isPlainTextFileType(fileType) {
 				processedLine = replaceImageTags(processedLine)
 			}
-			st.TextBuffer = append(st.TextBuffer, []rune(processedLine)) // Store raw text
+			st.TextBuffer = append(st.TextBuffer, []rune(processedLine)) 
 			lineBuffer.Reset()
 		}
 	}
