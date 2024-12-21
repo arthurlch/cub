@@ -20,9 +20,8 @@ var plainTextExtensions = map[string]bool{
 
 func DisplayTextBuffer(s *state.State, fileType string) {
     width, height := termbox.Size()
-    // Ensure minimum width for text area
     if width <= LineNumberWidth {
-        return // Screen too narrow to display anything
+        return 
     }
     contentWidth := width - LineNumberWidth
 
@@ -95,7 +94,7 @@ func renderHighlightedLine(line string, row, width int, lexer chroma.Lexer, s *s
         fg, bg := syntax.GetTermboxColor(token.Type, token.Value)
         for _, ch := range token.Value {
             if col >= width {
-                return // Stop if we've reached the available width
+                return 
             }
 
             if col >= startCol && col < endCol {

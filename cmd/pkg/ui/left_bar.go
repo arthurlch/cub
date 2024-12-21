@@ -4,37 +4,32 @@ import (
 	"fmt"
 
 	"github.com/arthurlch/cub/cmd/pkg/theme"
+	"github.com/arthurlch/cub/cmd/pkg/utils"
 	"github.com/nsf/termbox-go"
 )
 
-const LineNumberWidth = 4
-
 func (es *EditorState) RenderLineNumbers() {
 	st := es.State
-	maxLines := len(st.TextBuffer)
-	numWidth := 1
-	if maxLines > 9 {
-			numWidth = 2
-	}
-	if maxLines > 99 {
-			numWidth = 3
-	}
-	if maxLines > 999 {
-			numWidth = 4
-	}
-	if maxLines > 9999 {
-			numWidth = 5
-	}
-	actualWidth := numWidth + 1
+	_, height := termbox.Size()
 
-	for i := 0; i < st.Rows; i++ {
-			for j := 0; j < actualWidth; j++ {
-					termbox.SetCell(j, i, ' ', theme.ColorDarkPink, theme.ColorBackground)
+	for row := 0; row < height; row++ {
+			for col := 0; col < utils.LineNumberWidth; col++ {
+					termbox.SetCell(col, row, ' ', theme.ColorDarkPink, theme.ColorBackground)
 			}
-			
-			if i < len(st.TextBuffer) {
-					lineNumber := fmt.Sprintf("%*d", numWidth, i+st.OffsetRow+1)  // Right align number
-					printMessage(0, i, theme.ColorDarkPink, theme.ColorBackground, lineNumber)
+	}
+
+	for row := 0; row < height; row++ {
+			lineIndex := row + st.OffsetRow
+			if lineIndex >= len(st.TextBuffer) {
+					break
+			}
+
+			lineNum := fmt.Sprintf("%3d ", lineIndex+1) // 
+
+			for col, ch := range lineNum {
+					if col < utils.LineNumberWidth {
+							termbox.SetCell(col, row, ch, theme.ColorDarkPink, theme.ColorBackground)
+					}
 			}
 	}
 }
