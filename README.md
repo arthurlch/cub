@@ -10,7 +10,7 @@
 
 ## Overview
 
-**Cub** is a **lightweight, BLAZINGLY-FAST, terminal-based text editor** built for speed, simplicity, and precision. Inspired by the best features of Kakoune and Vim, Cub offers **intuitive keyboard navigation** that strikes a balance between **powerful functionality** and **ease of use**. Whether you're editing configuration files, writing code, or working on documentation, Cub's minimalist design helps you stay productive without unnecessary distractions.
+**Cub** is a **lightweight, BLAZINGLY-FAST, terminal-based text editor** built for speed, simplicity, and precision. Inspired by the best features of Kakoune and Vim, Cub offers **intuitive keyboard navigation** that strikes a balance between **powerful functionality** and **ease of use**. Whether you're editing configuration files, writing code, or working on documentation, Cub's minimalist design helps you stay productive without unnecessary distractions. Supporting syntax highlight for all major languages.
 
 Cub operates with two streamlined modes:  
 - **View Mode**: Navigate, select, and manipulate text with precision.  
@@ -91,38 +91,6 @@ These shortcuts help jump between empty lines, improving navigation within long 
 
 - **`e`**: Move to the next empty line.  
 - **`E`**: Move to the previous empty line.  
-
----
-
-### **Syntax Highlighting**
-
-Cub now supports syntax highlighting for the following languages:
-
-**A**: ABAP, ABNF, ActionScript, ActionScript 3, Ada, Agda, AL, Alloy, Angular2, ANTLR, ApacheConf, APL, AppleScript, ArangoDB AQL, Arduino, ArmAsm, AutoHotkey, AutoIt, Awk  
-**B**: Ballerina, Bash, Bash Session, Batchfile, BibTeX, Bicep, BlitzBasic, BNF, BQN, Brainfuck  
-**C**: C, C#, C++, Caddyfile, Caddyfile Directives, Cap'n Proto, Cassandra CQL, Ceylon, CFEngine3, cfstatement, ChaiScript, Chapel, Cheetah, Clojure, CMake, COBOL, CoffeeScript, Common Lisp, Coq, Crystal, CSS, Cython  
-**D**: D, Dart, Dax, Desktop Entry, Diff, Django/Jinja, dns, Docker, DTD, Dylan  
-**E**: EBNF, Elixir, Elm, EmacsLisp, Erlang  
-**F**: Factor, Fennel, Fish, Forth, Fortran, FortranFixed, FSharp  
-**G**: GAS, GDScript, Genshi, Genshi HTML, Genshi Text, Gherkin, Gleam, GLSL, Gnuplot, Go, Go HTML Template, Go Text Template, GraphQL, Groff, Groovy  
-**H**: Handlebars, Hare, Haskell, Haxe, HCL, Hexdump, HLB, HLSL, HolyC, HTML, HTTP, Hy  
-**I**: Idris, Igor, INI, Io, ISCdhcpd  
-**J**: J, Java, JavaScript, JSON, Julia, Jungle  
-**K**: Kotlin  
-**L**: Lighttpd configuration file, LLVM, Lua  
-**M**: Makefile, Mako, Markdown, Mason, Materialize SQL dialect, Mathematica, Matlab, MCFunction, Meson, Metal, MiniZinc, MLIR, Modula-2, MonkeyC, MorrowindScript, Myghty, MySQL  
-**N**: NASM, Natural, Newspeak, Nginx configuration file, Nim, Nix  
-**O**: Objective-C, OCaml, Octave, Odin, OnesEnterprise, OpenEdge ABL, OpenSCAD, Org Mode  
-**P**: PacmanConf, Perl, PHP, PHTML, Pig, PkgConfig, PL/pgSQL, plaintext, Plutus Core, Pony, PostgreSQL SQL dialect, PostScript, POVRay, PowerQuery, PowerShell, Prolog, PromQL, Promela, properties, Protocol Buffer, PRQL, PSL, Puppet, Python, Python 2  
-**Q**: QBasic, QML  
-**R**: R, Racket, Ragel, Raku, React, ReasonML, reg, Rego, reStructuredText, Rexx, RPMSpec, Ruby, Rust  
-**S**: SAS, Sass, Scala, Scheme, Scilab, SCSS, Sed, Sieve, Smali, Smalltalk, Smarty, SNBT, Snobol, Solidity, SourcePawn, SPARQL, SQL, SquidConf, Standard ML, Stas, Stylus, Svelte, Swift, SYSTEMD, SystemVerilog  
-**T**: TableGen, Tal, TASM, Tcl, Tcsh, Termcap, Terminfo, Terraform, TeX, Thrift, TOML, TradingView, Transact-SQL, Turing, Turtle, Twig, TypeScript, TypoScript, TypoScriptCssData, TypoScriptHtmlData, Typst  
-**V**: V, V Shell, Vala, VB.net, Verilog, VHDL, VHS, VimL, Vue  
-**W**: WDTE, WebGPU Shading Language, Whiley  
-**X**: XML, Xorg  
-**Y**: YAML, YANG  
-**Z**: Z80 Assembly, Zed, Zig
 
 ---
 
