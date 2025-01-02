@@ -5,7 +5,7 @@
 </p>
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/arthurlch/cub)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/arthurlch/cub/ci.yml)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/arthurlch/cub/build_and_test.yml)
 ![GitHub issues](https://img.shields.io/github/issues/arthurlch/cub)
 
 ## Overview
