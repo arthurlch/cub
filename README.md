@@ -1,7 +1,5 @@
 # -- Cub Text Editor --
 
-![cub screenshot](https://i.imgur.com/hZy8AMB.png)
-
 <p align="center">
   <img src="https://i.ibb.co/88MWThZ/d9f9d3aa-2ae6-47d9-96bc-2735eda584f9.webp" alt="Cub Logo" width="300" height="300">
 </p>
@@ -11,6 +9,8 @@
 ![GitHub issues](https://img.shields.io/github/issues/arthurlch/cub)
 
 ## Overview
+
+![cub screenshot](https://i.imgur.com/hZy8AMB.png)
 
 **Cub** is a lightweight, BLAZINGLY-FAST, terminal-based text editor built for speed and simplicity. Inspired by Kakoune and Vim, Cub offers intuitive keyboard navigation that strikes a balance between functionality and ease of use. 
 Cub is meant to be an alternative to simple text editors like Nano etc.
