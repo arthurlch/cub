@@ -1,4 +1,4 @@
-package ui
+package render
 
 import (
 	"fmt"
@@ -11,36 +11,31 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
-type EditorState struct {
-	State *state.State
-}
-
-func NewEditorState(sharedState *state.State) *EditorState {
-	return &EditorState{State: sharedState}
-}
-
-func (es *EditorState) StatusBar() {
-	st := es.State
+func StatusBar(st *state.State) {
 	filename := filepath.Base(st.SourceFile)
 	if len(filename) > 14 {
 		filename = filename[:14]
 	}
-	
-	leftStatus := filename
+
+	fileStatus := filename
 	if st.Modified {
-		leftStatus += " [MODIFIED]"
+		fileStatus += " [MODIFIED]"
 	} else {
-		leftStatus += " [SAVED]"
+		fileStatus += " [SAVED]"
 	}
 
 	modeStatus := " VIEW "
 	if st.Mode == state.InsertMode {
 		modeStatus = " INSERT "
 	}
-	leftStatus = modeStatus + leftStatus
+
+	leftStatus := modeStatus + fileStatus
+	if message, ok := st.ActiveMessage(); ok {
+		leftStatus = modeStatus + message
+	}
 
 	rightStatus := fmt.Sprintf("Row %d Col %d ", st.CurrentRow+1, st.CurrentCol)
-	
+
 	padding := st.Cols - len(leftStatus) - len(rightStatus)
 	if padding < 0 {
 		padding = 0

@@ -1,8 +1,8 @@
 package editor
 
 import (
+	"github.com/arthurlch/cub/cmd/pkg/logging"
 	"github.com/arthurlch/cub/cmd/pkg/state"
-	"github.com/arthurlch/cub/cmd/pkg/utils"
 )
 
 func StartSelection(st *state.State) {
@@ -11,7 +11,7 @@ func StartSelection(st *state.State) {
 	st.EndRow = st.CurrentRow
 	st.EndCol = st.CurrentCol
 	st.SelectionActive = true
-	utils.Logger.Printf("Selection started - StartRow: %d, StartCol: %d, SelectionActive: %v",
+	logging.Logger.Printf("Selection started - StartRow: %d, StartCol: %d, SelectionActive: %v",
 		st.StartRow, st.StartCol, st.SelectionActive)
 }
 
@@ -19,7 +19,7 @@ func UpdateSelection(st *state.State) {
 	st.EndRow = st.CurrentRow
 	st.EndCol = st.CurrentCol
 
-	utils.ValidateCursorPosition(st)
+	st.ClampCursor()
 
 	if st.StartRow == st.EndRow && st.StartCol <= st.EndCol {
 		st.EndCol++
@@ -28,7 +28,7 @@ func UpdateSelection(st *state.State) {
 
 func EndSelection(st *state.State) {
 	st.SelectionActive = false
-	utils.Logger.Println("End selection")
+	logging.Logger.Println("End selection")
 }
 
 func CopySelection(st *state.State) {
@@ -41,7 +41,12 @@ func CopySelection(st *state.State) {
 		startCol, endCol = endCol, startCol
 	}
 
-	utils.EnsurePositionExists(st, endRow, endCol)
+	if startCol > len(st.TextBuffer[startRow]) {
+		startCol = len(st.TextBuffer[startRow])
+	}
+	if endCol > len(st.TextBuffer[endRow]) {
+		endCol = len(st.TextBuffer[endRow])
+	}
 
 	for row := startRow; row <= endRow; row++ {
 		line := st.TextBuffer[row]
@@ -58,25 +63,23 @@ func CopySelection(st *state.State) {
 		}
 	}
 	st.CopyBuffer = copyBuffer
-	utils.Logger.Printf("Copy selection - CopyBuffer length: %d", len(st.CopyBuffer))
+	logging.Logger.Printf("Copy selection - CopyBuffer length: %d", len(st.CopyBuffer))
 }
 
 func CutSelection(st *state.State) {
-	utils.Logger.Println("Cut selection - Start")
+	logging.Logger.Println("Cut selection - Start")
 	CopySelection(st)
 	DeleteSelection(st)
-	utils.Logger.Printf("Cut selection - Removed text length: %d", len(st.CopyBuffer))
+	logging.Logger.Printf("Cut selection - Removed text length: %d", len(st.CopyBuffer))
 }
 
 func PasteSelection(st *state.State) {
-	if len(st.CopyBuffer) > 0 {
-		st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
-			TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
-			CurrentRow: st.CurrentRow,
-			CurrentCol: st.CurrentCol,
-		})
-		st.RedoBuffer = nil
+	if len(st.CopyBuffer) == 0 {
+		logging.Logger.Println("Paste selection - No text to paste")
+		return
+	}
 
+	st.Do("paste", func() {
 		lines := [][]rune{{}}
 		for _, ch := range st.CopyBuffer {
 			if ch == '\n' {
@@ -87,8 +90,8 @@ func PasteSelection(st *state.State) {
 		}
 
 		currentLine := st.TextBuffer[st.CurrentRow]
-		before := currentLine[:st.CurrentCol]
-		after := currentLine[st.CurrentCol:]
+		before := append([]rune{}, currentLine[:st.CurrentCol]...)
+		after := append([]rune{}, currentLine[st.CurrentCol:]...)
 
 		newTextBuffer := append([][]rune{}, st.TextBuffer[:st.CurrentRow]...)
 		newTextBuffer = append(newTextBuffer, append(before, lines[0]...))
@@ -97,11 +100,7 @@ func PasteSelection(st *state.State) {
 			newTextBuffer = append(newTextBuffer, lines[i])
 		}
 
-		if len(lines) > 1 {
-			newTextBuffer[len(newTextBuffer)-1] = append(newTextBuffer[len(newTextBuffer)-1], after...)
-		} else {
-			newTextBuffer[len(newTextBuffer)-1] = append(newTextBuffer[len(newTextBuffer)-1], after...)
-		}
+		newTextBuffer[len(newTextBuffer)-1] = append(newTextBuffer[len(newTextBuffer)-1], after...)
 
 		newTextBuffer = append(newTextBuffer, st.TextBuffer[st.CurrentRow+1:]...)
 
@@ -110,73 +109,65 @@ func PasteSelection(st *state.State) {
 		st.CurrentCol = len(newTextBuffer[st.CurrentRow]) - len(after)
 		st.Modified = true
 
-		utils.ValidateCursorPosition(st)
-
-	} else {
-		utils.Logger.Println("Paste selection - No text to paste")
-	}
+		st.ClampCursor()
+	})
 }
 
 func DeleteSelection(st *state.State) {
-	st.UndoBuffer = append(st.UndoBuffer, state.UndoState{
-		TextBuffer: utils.DeepCopyTextBuffer(st.TextBuffer),
-		CurrentRow: st.CurrentRow,
-		CurrentCol: st.CurrentCol,
-	})
-	st.RedoBuffer = nil 
+	st.Do("delete selection", func() {
+		newTextBuffer := [][]rune{}
+		startRow, endRow := st.StartRow, st.EndRow
+		startCol, endCol := st.StartCol, st.EndCol
 
-	newTextBuffer := [][]rune{}
-	startRow, endRow := st.StartRow, st.EndRow
-	startCol, endCol := st.StartCol, st.EndCol
-
-	if startRow > endRow || (startRow == endRow && startCol > endCol) {
-		startRow, endRow = endRow, startRow
-		startCol, endCol = endCol, startCol
-	}
-
-	for row := 0; row < len(st.TextBuffer); row++ {
-		if row < startRow || row > endRow {
-			newTextBuffer = append(newTextBuffer, st.TextBuffer[row])
-		} else if row == startRow && row == endRow {
-			utils.EnsurePositionExists(st, row, endCol)
-			line := st.TextBuffer[row]
-			newLine := append(line[:startCol], line[endCol:]...)
-			newTextBuffer = append(newTextBuffer, newLine)
-		} else if row == startRow {
-			utils.EnsurePositionExists(st, row, startCol)
-			line := st.TextBuffer[row]
-			newTextBuffer = append(newTextBuffer, line[:startCol])
-		} else if row == endRow {
-			utils.EnsurePositionExists(st, row, endCol)
-			line := st.TextBuffer[row]
-			newTextBuffer = append(newTextBuffer, line[endCol:])
+		if startRow > endRow || (startRow == endRow && startCol > endCol) {
+			startRow, endRow = endRow, startRow
+			startCol, endCol = endCol, startCol
 		}
-	}
 
-	if len(newTextBuffer) == 0 {
-		newTextBuffer = append(newTextBuffer, []rune{})
-	}
-	st.TextBuffer = newTextBuffer
+		for row := 0; row < len(st.TextBuffer); row++ {
+			if row < startRow || row > endRow {
+				newTextBuffer = append(newTextBuffer, st.TextBuffer[row])
+			} else if row == startRow && row == endRow {
+				st.EnsurePositionExists(row, endCol)
+				line := st.TextBuffer[row]
+				newLine := append(line[:startCol], line[endCol:]...)
+				newTextBuffer = append(newTextBuffer, newLine)
+			} else if row == startRow {
+				st.EnsurePositionExists(row, startCol)
+				line := st.TextBuffer[row]
+				newTextBuffer = append(newTextBuffer, line[:startCol])
+			} else if row == endRow {
+				st.EnsurePositionExists(row, endCol)
+				line := st.TextBuffer[row]
+				newTextBuffer = append(newTextBuffer, line[endCol:])
+			}
+		}
 
-	st.CurrentRow = startRow
-	st.CurrentCol = startCol
+		if len(newTextBuffer) == 0 {
+			newTextBuffer = append(newTextBuffer, []rune{})
+		}
+		st.TextBuffer = newTextBuffer
 
-	utils.ValidateCursorPosition(st)
+		st.CurrentRow = startRow
+		st.CurrentCol = startCol
 
-	st.Modified = true
+		st.ClampCursor()
+
+		st.Modified = true
+	})
 }
 
-// missing select all 
+// missing select all
 func SelectAll(st *state.State) {
 
 	if len(st.TextBuffer) == 0 {
-		return 
+		return
 	}
 
-	st.StartRow = 0 
-	st.StartCol = 0 
+	st.StartRow = 0
+	st.StartCol = 0
 	st.EndRow = len(st.TextBuffer) - 1
 	st.EndCol = len(st.TextBuffer[st.StartRow])
 
-	st.SelectionActive = true 
+	st.SelectionActive = true
 }

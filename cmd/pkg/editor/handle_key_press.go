@@ -1,20 +1,17 @@
 package editor
 
 import (
-	"os"
-
+	"github.com/arthurlch/cub/cmd/pkg/logging"
+	"github.com/arthurlch/cub/cmd/pkg/render"
 	"github.com/arthurlch/cub/cmd/pkg/state"
-	"github.com/arthurlch/cub/cmd/pkg/ui"
-	"github.com/arthurlch/cub/cmd/pkg/utils"
 	"github.com/nsf/termbox-go"
 )
 
 func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 	st := es.State
 
-
 	if keyEvent.Key == termbox.KeyCtrlH {
-		ui.ShowHelpModal()
+		render.ShowHelpModal()
 		return
 	}
 
@@ -27,18 +24,18 @@ func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 	}
 
 	if keyEvent.Key == termbox.KeyCtrlQ {
-		termbox.Close()
-		os.Exit(0)
+		st.Quit = true
+		return
 	}
 
 	if keyEvent.Key == termbox.KeyCtrlU {
-		utils.Logger.Println("Ctrl+U pressed")
+		logging.Logger.Println("Ctrl+U pressed")
 		Undo(st)
 		return
 	}
 
 	if keyEvent.Key == termbox.KeyCtrlR {
-		utils.Logger.Println("Ctrl+R pressed")
+		logging.Logger.Println("Ctrl+R pressed")
 		Redo(st)
 		return
 	}
@@ -57,9 +54,9 @@ func handleKeyPress(es *EditorState, keyEvent termbox.Event) {
 
 	if keyEvent.Key == termbox.KeyCtrlS {
 		if err := es.SaveFile(); err != nil {
-			ui.ShowErrorMessage(st, "Failed to save file: "+err.Error())
+			st.ShowMessage("Failed to save file: " + err.Error())
 		} else {
-			ui.ShowSuccessMessage(st, "File saved successfully.")
+			st.ShowMessage("File saved successfully.")
 		}
 		return
 	}
