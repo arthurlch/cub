@@ -1,19 +1,22 @@
 package editor
 
 import (
-	"github.com/arthurlch/cub/cmd/pkg/utils"
+	"github.com/arthurlch/cub/cmd/pkg/input"
+	"github.com/arthurlch/cub/cmd/pkg/logging"
 	"github.com/nsf/termbox-go"
 )
 
 func (es *EditorState) ProcessKeyPress(fileType string) {
 	st := es.State
-	keyEvent := utils.GetKey()
+	event := input.PollEvent()
 
-	switch keyEvent.Type {
+	switch event.Type {
 	case termbox.EventKey:
-		handleKeyPress(es, keyEvent)
+		handleKeyPress(es, event)
 	case termbox.EventResize:
 		st.Cols, st.Rows = termbox.Size()
 		st.Rows--
+	case termbox.EventError:
+		logging.Logger.Printf("input error: %v", event.Err)
 	}
 }

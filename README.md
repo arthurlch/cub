@@ -108,10 +108,17 @@ These shortcuts help jump between empty lines, improving navigation within long 
 
 ## Installation
 
-To install and build Cub, follow these steps:
+### Homebrew
 
 ```bash
-git clone https://github.com/yourusername/cub.git
+brew tap arthurlch/cub
+brew install cub
+```
+
+### From source
+
+```bash
+git clone https://github.com/arthurlch/cub.git
 cd cub
 make build
 ```

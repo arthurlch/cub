@@ -1,4 +1,4 @@
-package ui
+package render
 
 import (
 	"github.com/arthurlch/cub/cmd/pkg/theme"
@@ -6,7 +6,7 @@ import (
 )
 
 func ShowHelpModal() {
-	termbox.Clear(termbox.ColorDefault, theme.SoftBlack)
+	_ = termbox.Clear(termbox.ColorDefault, theme.SoftBlack)
 
 	asciiArt := []string{
 		" ______     __  __     ______    ",
@@ -56,8 +56,8 @@ func ShowHelpModal() {
 		centerText(shortcut, startY+len(asciiArt)+2+i, theme.ModalTextColor)
 	}
 
-	termbox.Flush()
+	_ = termbox.Flush()
 	termbox.PollEvent()
-	termbox.Clear(termbox.ColorDefault, theme.SoftBlack)
-	termbox.Flush()
+	_ = termbox.Clear(termbox.ColorDefault, theme.SoftBlack)
+	_ = termbox.Flush()
 }

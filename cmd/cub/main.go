@@ -2,33 +2,40 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
+	"github.com/arthurlch/cub/cmd/pkg/document"
 	"github.com/arthurlch/cub/cmd/pkg/editor"
+	"github.com/arthurlch/cub/cmd/pkg/logging"
+	"github.com/arthurlch/cub/cmd/pkg/render"
 	"github.com/arthurlch/cub/cmd/pkg/state"
 	"github.com/arthurlch/cub/cmd/pkg/theme"
-	"github.com/arthurlch/cub/cmd/pkg/ui"
-	"github.com/arthurlch/cub/cmd/pkg/utils"
 	"github.com/nsf/termbox-go"
 )
 
-var logger *log.Logger
+var version = "dev"
 
-func init() {
-	file, err := os.OpenFile("editor.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		fmt.Println("Failed to open log file:", err)
-		os.Exit(1)
-	}
-	logger = log.New(file, "", log.LstdFlags)
-}
+const usage = `cub - a simple terminal text editor
+
+usage:
+  cub [file]
+
+flags:
+  -h, --help      show this help and exit
+  -v, --version   show version and exit
+
+keys:
+  i              enter insert mode        Esc            back to view mode
+  Ctrl+S         save                     Ctrl+Q         quit
+  Ctrl+U         undo                     Ctrl+R         redo
+  Ctrl+H         help
+`
 
 func runTextEditor() {
-	utils.InitLogger()
+	logging.InitLogger()
 
 	if err := termbox.Init(); err != nil {
-		ui.ShowErrorMessage(&state.State{}, fmt.Sprintf("Failed to initialize termbox: %v", err))
+		fmt.Println("Failed to initialize termbox:", err)
 		os.Exit(1)
 	}
 	defer termbox.Close()
@@ -40,60 +47,60 @@ func runTextEditor() {
 
 	sharedState := &state.State{}
 	editorState := editor.NewEditorState(sharedState)
-	uiState := ui.NewEditorState(sharedState)
 
 	var fileType string
 	if len(os.Args) > 1 {
 		filePath := os.Args[1]
 		if err := editorState.ReadFile(filePath); err != nil {
-			ui.ShowErrorMessage(sharedState, fmt.Sprintf("Failed to read file: %v", err))
-			termbox.Flush()
+			sharedState.ShowMessage(fmt.Sprintf("Failed to read file: %v", err))
 			return
 		}
-		fileType = utils.DetermineFileType(filePath)
+		fileType = document.Extension(filePath)
 	} else {
 		sharedState.TextBuffer = append(sharedState.TextBuffer, []rune{})
-		fileType = ""
 	}
 
-	mainLoop(sharedState, uiState, editorState, fileType)
+	mainLoop(sharedState, editorState, fileType)
 }
 
-func mainLoop(sharedState *state.State, uiState *ui.EditorState, editorState *editor.EditorState, fileType string) {
-	var prevCols, prevRows int
+func mainLoop(sharedState *state.State, editorState *editor.EditorState, fileType string) {
+	sharedState.Cols, sharedState.Rows = termbox.Size()
+	sharedState.Rows--
 
-	for {
-		cols, rows := termbox.Size()
-		if cols != prevCols || rows != prevRows {
-			sharedState.Cols, sharedState.Rows = cols, rows-1
-			prevCols, prevRows = cols, rows
-			redraw(sharedState, uiState, fileType)
-		}
-
+	for !sharedState.Quit {
+		redraw(sharedState, fileType)
 		editorState.ProcessKeyPress(fileType)
-		redraw(sharedState, uiState, fileType)
 	}
 }
 
-// filetype not used but likely to be used later on
-func redraw(sharedState *state.State, uiState *ui.EditorState, fileType string) {
-	termbox.Clear(theme.TextForeground, theme.ColorBackground)
-	
-	utils.ScrollTextBuffer(sharedState)
-	
-	utils.DisplayTextBuffer(sharedState, fileType)
-	
-	uiState.RenderLineNumbers()
-	
-	uiState.StatusBar()
-	
-	cursorCol := sharedState.CurrentCol - sharedState.OffsetCol + utils.LineNumberWidth
+func redraw(sharedState *state.State, fileType string) {
+	_ = termbox.Clear(theme.TextForeground, theme.ColorBackground)
+
+	sharedState.Scroll()
+
+	render.DisplayTextBuffer(sharedState, fileType)
+
+	render.RenderLineNumbers(sharedState)
+
+	render.StatusBar(sharedState)
+
+	cursorCol := sharedState.CurrentCol - sharedState.OffsetCol + render.LineNumberWidth
 	cursorRow := sharedState.CurrentRow - sharedState.OffsetRow
 	termbox.SetCursor(cursorCol, cursorRow)
-	
-	termbox.Flush()
+
+	_ = termbox.Flush()
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "-v", "--version":
+			fmt.Println("cub", version)
+			return
+		case "-h", "--help":
+			fmt.Print(usage)
+			return
+		}
+	}
 	runTextEditor()
 }

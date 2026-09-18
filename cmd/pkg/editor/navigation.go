@@ -21,22 +21,17 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/arthurlch/cub/cmd/pkg/logging"
 	"github.com/arthurlch/cub/cmd/pkg/state"
-	"github.com/arthurlch/cub/cmd/pkg/utils"
 	"github.com/nsf/termbox-go"
 )
 
 func handleNavigation(st *state.State, keyEvent termbox.Event) {
-	if st.Mode == state.InsertMode {
-		handleSimpleNavigation(st, keyEvent)
-	} else if st.Mode == state.ViewMode {
-		handleSimpleNavigation(st, keyEvent)
-		handleComplexNavigation(st, keyEvent)
-	}
+	handleSimpleNavigation(st, keyEvent)
 
-	utils.ValidateCursorPosition(st)
-	utils.LogKeyPress("handleNavigation", keyEvent)
-	utils.LogBufferState(st, "Navigation")
+	st.ClampCursor()
+	logging.LogKeyPress("handleNavigation", keyEvent)
+	logging.LogBufferState(st, "Navigation")
 }
 
 func handleSimpleNavigation(st *state.State, keyEvent termbox.Event) {
@@ -52,85 +47,45 @@ func handleSimpleNavigation(st *state.State, keyEvent termbox.Event) {
 	case termbox.KeyHome:
 		st.CurrentCol = 0
 	case termbox.KeyEnd:
-		utils.AdjustCursorColToLineEnd(st)
+		st.SnapCursorToLineEnd()
 	case termbox.KeyPgup:
 		movePageUp(st)
 	case termbox.KeyPgdn:
 		movePageDown(st)
 	}
-	utils.ValidateCursorPosition(st)
-}
-
-func handleComplexNavigation(st *state.State, keyEvent termbox.Event) {
-	switch keyEvent.Ch {
-	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		st.LineNumberBuffer += string(keyEvent.Ch)
-
-	case 'G':
-		jumpToLine(st)
-		st.LineNumberBuffer = "" 
-
-	case 'k':
-		moveUp(st)
-	case 'j':
-		moveRight(st)
-	case 'i':
-		moveLeft(st)
-	case 'm':
-		moveDown(st)
-	case 'w':
-		moveToNextWord(st)
-	case 'b':
-		moveToPreviousWord(st)
-	case '(':
-		moveToMatchingBracket(st, '(')
-	case ')':
-		moveToMatchingBracket(st, ')')
-	case 'e':
-		moveToNextEmptyLine(st)
-	case 'E':
-		moveToPreviousEmptyLine(st)
-	case '^':
-		moveToLineStart(st)
-	case '$':
-		moveToLineEnd(st)
-	case 'z':
-		centerCursor(st)
-	case 'g':
-		st.CurrentRow, st.CurrentCol = 0, 0 
-	}
+	st.ClampCursor()
 }
 
 func moveUp(st *state.State) {
-	utils.AdjustCursorAfterChange(st, st.CurrentRow-1, st.CurrentCol)
+	st.MoveCursor(st.CurrentRow-1, st.CurrentCol)
 }
 
 func moveDown(st *state.State) {
-	utils.AdjustCursorAfterChange(st, st.CurrentRow+1, st.CurrentCol)
+	st.MoveCursor(st.CurrentRow+1, st.CurrentCol)
 }
 
 func moveLeft(st *state.State) {
 	if st.CurrentCol > 0 {
-		utils.AdjustCursorAfterChange(st, st.CurrentRow, st.CurrentCol-1)
+		st.MoveCursor(st.CurrentRow, st.CurrentCol-1)
 	} else if st.CurrentRow > 0 {
-		utils.AdjustCursorAfterChange(st, st.CurrentRow-1, len(st.TextBuffer[st.CurrentRow-1]))
+		st.MoveCursor(st.CurrentRow-1, len(st.TextBuffer[st.CurrentRow-1]))
 	}
 }
 
 func moveRight(st *state.State) {
 	if st.CurrentCol < len(st.TextBuffer[st.CurrentRow]) {
-		utils.AdjustCursorAfterChange(st, st.CurrentRow, st.CurrentCol+1)
+		st.MoveCursor(st.CurrentRow, st.CurrentCol+1)
 	} else if st.CurrentRow < len(st.TextBuffer)-1 {
-		utils.AdjustCursorAfterChange(st, st.CurrentRow+1, 0)
+		st.MoveCursor(st.CurrentRow+1, 0)
 	}
 }
 
 func movePageUp(st *state.State) {
-	utils.AdjustCursorAfterChange(st, st.CurrentRow-int(st.Rows/4), st.CurrentCol)
+	st.MoveCursor(st.CurrentRow-int(st.Rows/4), st.CurrentCol)
 }
 
 func movePageDown(st *state.State) {
-	utils.AdjustCursorAfterChange(st, st.CurrentRow+int(st.Rows/4), st.CurrentCol)
+	st.MoveCursor(st.CurrentRow+int(st.Rows/4), st.CurrentCol)
 }
 
 func moveToNextWord(st *state.State) {
@@ -138,7 +93,7 @@ func moveToNextWord(st *state.State) {
 		line := st.TextBuffer[row]
 		for col := st.CurrentCol + 1; col < len(line); col++ {
 			if isWordBoundary(line[col-1], line[col]) {
-				utils.AdjustCursorAfterChange(st, row, col)
+				st.MoveCursor(row, col)
 				return
 			}
 		}
@@ -151,7 +106,7 @@ func moveToPreviousWord(st *state.State) {
 		line := st.TextBuffer[row]
 		for col := st.CurrentCol - 1; col > 0; col-- {
 			if isWordBoundary(line[col-1], line[col]) {
-				utils.AdjustCursorAfterChange(st, row, col)
+				st.MoveCursor(row, col)
 				return
 			}
 		}
@@ -172,13 +127,13 @@ func moveToMatchingBracket(st *state.State, openBracket rune) {
 		for row := st.CurrentRow; row < len(st.TextBuffer); row++ {
 			line := st.TextBuffer[row]
 			for col := 0; col < len(line); col++ {
-				ch := line[col]
-				if ch == openBracket {
+				switch line[col] {
+				case openBracket:
 					depth++
-				} else if ch == closeBracket {
+				case closeBracket:
 					depth--
 					if depth == 0 {
-						utils.AdjustCursorAfterChange(st, row, col)
+						st.MoveCursor(row, col)
 						return
 					}
 				}
@@ -188,13 +143,13 @@ func moveToMatchingBracket(st *state.State, openBracket rune) {
 		for row := st.CurrentRow; row >= 0; row-- {
 			line := st.TextBuffer[row]
 			for col := len(line) - 1; col >= 0; col-- {
-				ch := line[col]
-				if ch == closeBracket {
+				switch line[col] {
+				case closeBracket:
 					depth++
-				} else if ch == openBracket {
+				case openBracket:
 					depth--
 					if depth == 0 {
-						utils.AdjustCursorAfterChange(st, row, col)
+						st.MoveCursor(row, col)
 						return
 					}
 				}
@@ -206,7 +161,7 @@ func moveToMatchingBracket(st *state.State, openBracket rune) {
 func moveToNextEmptyLine(st *state.State) {
 	for row := st.CurrentRow + 1; row < len(st.TextBuffer); row++ {
 		if strings.TrimSpace(string(st.TextBuffer[row])) == "" {
-			utils.AdjustCursorAfterChange(st, row, 0)
+			st.MoveCursor(row, 0)
 			return
 		}
 	}
@@ -215,7 +170,7 @@ func moveToNextEmptyLine(st *state.State) {
 func moveToPreviousEmptyLine(st *state.State) {
 	for row := st.CurrentRow - 1; row >= 0; row-- {
 		if strings.TrimSpace(string(st.TextBuffer[row])) == "" {
-			utils.AdjustCursorAfterChange(st, row, 0)
+			st.MoveCursor(row, 0)
 			return
 		}
 	}
@@ -225,18 +180,11 @@ func moveToLineStart(st *state.State) {
 	line := st.TextBuffer[st.CurrentRow]
 	for col := 0; col < len(line); col++ {
 		if !unicode.IsSpace(line[col]) {
-			utils.AdjustCursorAfterChange(st, st.CurrentRow, col)
+			st.MoveCursor(st.CurrentRow, col)
 			return
 		}
 	}
-	utils.AdjustCursorAfterChange(st, st.CurrentRow, 0)
-}
-
-func centerCursor(st *state.State) {
-	st.OffsetRow = st.CurrentRow - st.Rows/2
-	if st.OffsetRow < 0 {
-		st.OffsetRow = 0
-	}
+	st.MoveCursor(st.CurrentRow, 0)
 }
 
 func moveToLineEnd(st *state.State) {
@@ -246,12 +194,12 @@ func moveToLineEnd(st *state.State) {
 func jumpToLine(st *state.State) {
 	lineNumber, err := strconv.Atoi(st.LineNumberBuffer)
 	if err != nil {
-		return 
+		return
 	}
-  // end of the buffer is max, I shall not jump further
+	// end of the buffer is max, I shall not jump further
 	if lineNumber > len(st.TextBuffer) {
 		lineNumber = len(st.TextBuffer)
 	}
 
-	utils.AdjustCursorAfterChange(st, lineNumber-1, 0)
+	st.MoveCursor(lineNumber-1, 0)
 }

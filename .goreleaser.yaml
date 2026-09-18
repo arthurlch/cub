@@ -1,0 +1,47 @@
+version: 2
+
+project_name: cub
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: cub
+    main: ./cmd/cub
+    binary: cub
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - id: cub
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  use: github
+
+homebrew_casks:
+  - name: cub
+    repository:
+      owner: arthurlch
+      name: homebrew-cub
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Casks
+    homepage: "https://github.com/arthurlch/cub"
+    description: "A simple and powerful terminal text editor"

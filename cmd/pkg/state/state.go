@@ -9,38 +9,57 @@ import (
 type Mode int
 
 const (
-    ViewMode Mode = iota
-    InsertMode
+	ViewMode Mode = iota
+	InsertMode
 )
 
-type UndoState struct {
+type Buffer struct {
 	TextBuffer [][]rune
+	SourceFile string
+	Modified   bool
+	Language   string
+}
+
+type Cursor struct {
 	CurrentRow int
 	CurrentCol int
 }
-	
-type State struct {
-	Mode             Mode
-	Rows, Cols       int
-	OffsetRow        int
-	OffsetCol        int
-	CurrentRow       int
-	CurrentCol       int
-	StartRow         int
-	StartCol         int
-	EndRow           int
-	EndCol           int
-	SourceFile       string
-	SelectionActive  bool
-	TextBuffer       [][]rune
-	UndoBuffer       []UndoState
-	RedoBuffer       []UndoState
-	CopyBuffer       []rune
-	Modified         bool
-	QuitKey          termbox.Key
+
+type Selection struct {
+	StartRow        int
+	StartCol        int
+	EndRow          int
+	EndCol          int
+	SelectionActive bool
+}
+
+type Viewport struct {
+	OffsetRow int
+	OffsetCol int
+	Rows      int
+	Cols      int
+}
+
+type UIState struct {
 	ErrorMessage     string
 	MessageTimestamp time.Time
 	LastKey          rune
+	QuitKey          termbox.Key
 	LineNumberBuffer string
-	Language    string
+}
+
+type State struct {
+	Mode Mode
+	Buffer
+	Cursor
+	Selection
+	Viewport
+
+	UIState
+
+	CopyBuffer []rune
+
+	Quit bool
+
+	history History
 }

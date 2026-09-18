@@ -8,33 +8,33 @@ import (
 )
 
 func GetLexer(fileType string) chroma.Lexer {
-    lexer := lexers.Get(fileType)
-    if lexer == nil {
-        return lexers.Fallback
-    }
-    return chroma.Coalesce(lexer)
+	lexer := lexers.Get(fileType)
+	if lexer == nil {
+		return lexers.Fallback
+	}
+	return chroma.Coalesce(lexer)
 }
 
 func GetTermboxColor(tokenType chroma.TokenType, tokenValue string) (termbox.Attribute, termbox.Attribute) {
-    bg := theme.TextBackground
+	bg := theme.TextBackground
 
-    switch tokenType.Category() {
-    case chroma.Keyword:
-        return theme.Blue, bg
-    case chroma.Name:
-        if tokenType == chroma.NameFunction {
-            return theme.Yellow, bg
-        }
-        return theme.White, bg
-    case chroma.String:
-        return theme.PinkBold, bg
-    case chroma.Number:
-        return theme.Yellow, bg
-    case chroma.Comment:
-        return theme.LightGray, bg
-    case chroma.Operator, chroma.Punctuation:
-        return theme.Red, bg
-    default:
-        return theme.White, bg
-    }
+	switch tokenType.Category() {
+	case chroma.Keyword:
+		return theme.Blue, bg
+	case chroma.Name:
+		if tokenType == chroma.NameFunction {
+			return theme.Yellow, bg
+		}
+		return theme.White, bg
+	case chroma.String:
+		return theme.PinkBold, bg
+	case chroma.Number:
+		return theme.Yellow, bg
+	case chroma.Comment:
+		return theme.LightGray, bg
+	case chroma.Operator, chroma.Punctuation:
+		return theme.Red, bg
+	default:
+		return theme.White, bg
+	}
 }
