@@ -193,6 +193,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.handleMouse(msg)
 		}
 	case tea.KeyMsg:
+		if msg.Type == tea.KeyRunes && len(msg.Runes) > 1 {
+			var cmds []tea.Cmd
+			var mdl tea.Model = m
+			for _, r := range msg.Runes {
+				var c tea.Cmd
+				mdl, c = mdl.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}, Alt: msg.Alt})
+				if c != nil {
+					cmds = append(cmds, c)
+				}
+			}
+			return mdl, tea.Batch(cmds...)
+		}
 		ev := fromTea(msg)
 		if m.showTheme {
 			m.themeKey(ev)

@@ -126,9 +126,13 @@ func (m Model) tabLayout(width int) []tabBox {
 func (m *Model) clickTab(x int) {
 	for _, bx := range m.tabLayout(m.width) {
 		if x >= bx.x && x < bx.x+bx.w {
-			m.setActive(bx.doc)
 			if x >= bx.x+bx.w-2 {
+				if bx.doc != m.active {
+					m.setActive(bx.doc)
+				}
 				m.requestClose()
+			} else {
+				m.setActive(bx.doc)
 			}
 			return
 		}

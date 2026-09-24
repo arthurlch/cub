@@ -103,6 +103,25 @@ func TestMouseClosesTabViaCloseGlyph(t *testing.T) {
 	assert.Equal(t, 1, len(m.docs), "clicking the close glyph closes that tab")
 }
 
+func TestMouseCloseModifiedTabTakesTwoClicks(t *testing.T) {
+	dir := t.TempDir()
+	m := New(editor.New(), &filetree.Node{Name: "root"}, 26)
+	tm, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = tm.(Model)
+	m.openInTab(tmpFile(t, dir, "a.txt", "a"))
+	m.openInTab(tmpFile(t, dir, "b.txt", "b"))
+	m.e.InsertRune('x') // active tab (b) now modified
+	assert.Equal(t, 2, len(m.docs))
+
+	boxes := m.tabLayout(m.width)
+	closeX := boxes[1].x + boxes[1].w - 1
+
+	m.clickTab(closeX)
+	assert.Equal(t, 2, len(m.docs), "first click on a dirty tab's ✕ only warns")
+	m.clickTab(closeX)
+	assert.Equal(t, 1, len(m.docs), "second click on the ✕ discards and closes")
+}
+
 func TestMouseClickTabBodySwitchesWithoutClosing(t *testing.T) {
 	dir := t.TempDir()
 	m := New(editor.New(), &filetree.Node{Name: "root"}, 26)

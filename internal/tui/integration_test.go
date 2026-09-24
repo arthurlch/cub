@@ -54,6 +54,36 @@ func TestAddCaretAboveFromLowerLine(t *testing.T) {
 	assert.Equal(t, "aaa\nXbbb\nXccc", a.text())
 }
 
+func TestMultiRuneBurstInsertsAll(t *testing.T) {
+	// Fast typing and pastes arrive as a single KeyRunes message carrying many
+	// runes; every one must be inserted, not just the first.
+	a := newApp(t, "")
+	a.typ("i")
+	a.send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("hello world")})
+	assert.Equal(t, "hello world", a.text())
+}
+
+func TestMultiRuneBurstInViewModeRunsEachCommand(t *testing.T) {
+	// A burst in view mode must dispatch each rune as its own command.
+	a := newApp(t, "one\ntwo\nthree")
+	a.send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("dd")}) // delete line as a burst
+	assert.Equal(t, "two\nthree", a.text())
+}
+
+func TestEndToEndExpectScenario(t *testing.T) {
+	// Mirrors tests/expect_test.sh: i, three bursty lines, esc, gg, dd, yy, p.
+	a := newApp(t, "")
+	a.typ("i")
+	a.send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("abc")})
+	a.send(tea.KeyMsg{Type: tea.KeyEnter})
+	a.send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("def")})
+	a.send(tea.KeyMsg{Type: tea.KeyEnter})
+	a.send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("ghi")})
+	a.send(tea.KeyMsg{Type: tea.KeyEsc})
+	a.typ("gg").typ("dd").typ("yy").typ("p")
+	assert.Equal(t, "def\ndef\nghi", a.text())
+}
+
 func TestVimOpenLineFlow(t *testing.T) {
 	a := newApp(t, "first\nsecond")
 	a.typ("o").typ("mid") // open line below "first", type

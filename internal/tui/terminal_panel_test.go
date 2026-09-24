@@ -128,6 +128,37 @@ func TestHiddenTerminalDoesNotCaptureKeys(t *testing.T) {
 	assert.Equal(t, "Zabc", a.text(), "keys reach the editor when the terminal is hidden")
 }
 
+func TestMouseTerminalTabSwitchCloseAdd(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skips spawning shells in short mode")
+	}
+	a := newApp(t, "code")
+	a.m.toggleTerminal()
+	if a.m.activeTerm() == nil {
+		t.Skip("no pty available in this environment")
+	}
+	defer a.m.closeAllTerminals()
+	a.m.spawnTerminal()
+	a.m.spawnTerminal()
+	a.m.applySize()
+
+	tabs := a.m.termTabLayout()
+	// tabs: [term0, term1, term2, add(+)]
+	a.m.clickTerminalHeader(tabs[0].x + 1) // click number 1 -> switch
+	assert.Equal(t, 0, a.m.termActive, "clicking a terminal number switches to it")
+
+	// close terminal 1 via its ✕ (last 2 cols of that tab box)
+	tabs = a.m.termTabLayout()
+	a.m.clickTerminalHeader(tabs[1].x + tabs[1].w - 1)
+	assert.Equal(t, 2, len(a.m.terms), "clicking a terminal ✕ closes it")
+
+	// the "+" chip spawns another
+	tabs = a.m.termTabLayout()
+	add := tabs[len(tabs)-1]
+	a.m.clickTerminalHeader(add.x + 1)
+	assert.Equal(t, 3, len(a.m.terms), "clicking + opens a terminal")
+}
+
 func TestTerminalGenerationGuardsStaleUpdates(t *testing.T) {
 	a := newApp(t, "code")
 	a.m.termGen = 5

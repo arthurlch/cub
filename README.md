@@ -19,9 +19,9 @@ Cub has two modes:
 
 ### Features
 
-- **Modal editing** with `hjkl` motions, word/line motions, and go-to-line.
+- **Modal editing** — vim-style `hjkl` motions, `w`/`b` words, `gg`/`G`, visual mode (`v`), and line registers (`yy`/`dd`/`p`).
 - **Multiple cursors** — stack cursors across lines and edit them all at once, with grouped undo.
-- **Integrated terminal** — a real shell in a bottom panel, powered by a built-in VT emulator.
+- **Integrated terminal** — one or more real shells in a bottom panel, powered by a built-in VT emulator.
 - **250+ languages** and **24 truecolor colorschemes** (dark & light) via [chroma](https://github.com/alecthomas/chroma), with real per-token syntax highlighting.
 - **Tabs** — open many files at once, each with its own cursor, selection, and undo history.
 - **File sidebar** — a toggleable, resizable file explorer.
@@ -114,9 +114,9 @@ Open multiple files at once, shown as a clickable tab strip along the top. Each 
 ## Integrated terminal
 
 - **`Ctrl+G`** — toggle a real shell (`$SHELL`) in a panel across the bottom of the editor. It runs through a built-in VT emulator, so colors, prompts, and full-screen programs work.
-- While the terminal is focused, keystrokes go straight to the shell; **`Ctrl+G`** hides it and returns focus to the editor. `Ctrl+Q` still quits cub.
-- **Multiple terminals** — while focused, **`Ctrl+N`** opens another shell and **`Ctrl+←` / `Ctrl+→`** switch between them. The header shows numbered tabs (`1 2 3 …` and a `+`); click a number to switch or `+` to add one.
-- **Resize it** — while focused, **`Ctrl+↑` / `Ctrl+↓`** grow/shrink the panel, or **drag its header bar** with the mouse. Click inside the panel to focus it, click the editor to leave.
+- **Focus** — `Ctrl+G` is smart: it shows + focuses the panel, focuses it again if you'd clicked away, or hides it when it's already focused. While the terminal is focused, keystrokes go straight to the shell; **`Esc`** hands focus back to the editor without closing the panel. Click either pane to focus it. `Ctrl+Q` always quits cub.
+- **Multiple terminals** — while focused, **`Ctrl+N`** opens another shell, **`Ctrl+W`** closes the current one, and **`Ctrl+←` / `Ctrl+→`** switch between them. The header shows numbered tabs (`1 ✕  2 ✕  +`); click a number to switch, its **`✕`** to close it, or **`+`** to add one.
+- **Resize it** — while focused, **`Ctrl+↑` / `Ctrl+↓`** grow/shrink the panel, or **drag its header bar** with the mouse.
 - Each panel remembers its size, resizes with the window, and every shell is cleaned up on exit.
 
 ## File sidebar
@@ -159,6 +159,7 @@ Cub reads a JSON config from `~/.config/cub/config.json` (or `$XDG_CONFIG_HOME/c
 
 - **`theme`** and **`sidebar_right`** are saved automatically whenever you switch theme (`Ctrl+T`) or flip the sidebar side (`Ctrl+E`).
 - **`keys`** maps an action to a chord. Every global and view-mode action is rebindable; insert-mode typing is fixed. Any action you leave out keeps its default.
+- cub also writes a `version` field it manages for config migrations — leave it alone; when defaults change across versions it refreshes your keymap while keeping your theme and sidebar side.
 
 Chord syntax: a single character (`i`, `$`), a named key (`enter`, `esc`, `tab`, `space`, `backspace`, `delete`, `home`, `end`, `pgup`, `pgdn`, arrow names `left`/`right`/`up`/`down`), with optional `ctrl+` / `alt+` prefixes (e.g. `ctrl+s`, `ctrl+right`). A two-character value is a sequence, like the default `dd` or `gg`.
 
@@ -182,6 +183,7 @@ In visual mode (`v`), `y` yanks, `d`/`x` delete, and `p` pastes over the selecti
 
 - **Click** in the editor to place the cursor; **drag** to select text.
 - **Click** a tab to switch, or its **`✕`** to close it; **click** a sidebar entry to open a file or toggle a folder.
+- In the terminal header, **click** a numbered tab to switch, its **`✕`** to close it, or **`+`** to open one; **click** the panel body to focus it.
 - **Drag the sidebar border** (`│`) to resize it; **drag the terminal header** to resize the terminal.
 - **Scroll wheel** to move through the buffer, or the file tree when hovering the sidebar.
 
@@ -204,7 +206,7 @@ cd cub
 make build      # builds ./cub
 ```
 
-Requires Go 1.21+.
+Requires Go 1.24+.
 
 ---
 
@@ -229,10 +231,13 @@ Truecolor themes look best in a truecolor-capable terminal (kitty, WezTerm, Alac
 
 ## Tips
 
-- Enter insert mode with `i`, get back to view mode with `Esc`.
-- Select with `s`, move to extend, then `c` (copy) / `x` (cut), and `v` to paste.
-- Jump to a line with `<number>G` (e.g. `120G`); jump to the top with `g`.
+- Enter insert mode with `i` (or `a` to append, `o`/`O` to open a line), get back to view mode with `Esc`.
+- Select with `v` (visual), move to extend, then `y` (yank) / `d` (delete), and `p` to paste.
+- Duplicate a line with `yy` then `p`; delete one with `dd`.
+- Jump to a line with `<number>G` (e.g. `120G`); jump to the top with `gg`, the bottom with `G`.
 - Undo/redo with `u` / `Ctrl+R`.
+- Drop extra cursors with `Ctrl+↑` / `Ctrl+↓`, then type once to edit every line.
+- Pop a shell with `Ctrl+G`; `Esc` jumps back to the editor.
 - Open files fast with the fuzzy finder (`Ctrl+P`) or the sidebar (`Ctrl+B`).
 - Press `Ctrl+H` any time for the in-app keybinding overlay.
 
