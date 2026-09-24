@@ -67,7 +67,7 @@ build-all: $(PLATFORMS)
 
 $(PLATFORMS):
 	@echo "Building for $@..."
-	GOOS=$(word 1, $(subst -, ,$@)) GOARCH=$(word 2, $(subst -, ,$@)) \
+	CGO_ENABLED=0 GOOS=$(word 1, $(subst -, ,$@)) GOARCH=$(word 2, $(subst -, ,$@)) \
 	go build -o $(OUTPUT_DIR)/$(BINARY_NAME)_$@ ./cmd/cub
 
 deps:
