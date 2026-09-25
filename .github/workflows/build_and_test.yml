@@ -5,76 +5,105 @@ on:
     branches:
       - main
       - master
-      - feature/*
+      - "feature/*"
+      - "audit/*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-
+    name: test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.20'
+          go-version-file: go.mod
+          cache: true
 
-      - name: Install dependencies
-        run: go mod tidy
-
-      - name: Run Go Linter
+      - name: Check formatting
         run: |
-          go install golang.org/x/lint/golint@latest
-          golint ./...
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files are not gofmt-ed:"
+            echo "$unformatted"
+            exit 1
+          fi
 
-      - name: Run tests with coverage
-        run: |
-          mkdir -p coverage
-          go test ./... -v -coverprofile=coverage/coverage.out
-          go tool cover -html=coverage/coverage.out -o coverage/coverage.html
+      - name: Vet
+        run: go vet ./...
 
-      - name: Upload coverage to Codecov
+      - name: Staticcheck
+        uses: dominikh/staticcheck-action@v1
+        with:
+          version: latest
+          install-go: false
+
+      - name: Test (race + coverage)
+        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
+
+      - name: Benchmarks and allocation smoke
+        run: go test -run '^$' -bench . -benchmem -benchtime=20x ./internal/editor/ ./internal/tui/
+
+      - name: Upload coverage
+        if: matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v4.5.0
         with:
-          file: ./coverage/coverage.out
+          files: ./coverage.out
           flags: unittests
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Build binaries for testing
+      - name: Build binary
+        run: go build -o cub ./cmd/cub
+
+      - name: CLI smoke test
+        run: |
+          ./cub --version
+          ./cub --help | grep -q "view mode" || { echo "help output missing keybindings"; exit 1; }
+
+      - name: Install expect
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update && sudo apt-get install -y expect
+          else
+            command -v expect >/dev/null || brew install expect
+          fi
+
+      - name: End-to-end (expect)
+        run: |
+          chmod +x tests/expect_test.sh
+          ./tests/expect_test.sh ./cub
+
+  cross-build:
+    name: cross-compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build all targets
         run: make build-all
 
-      - name: Verify binaries and set paths
+      - name: Verify artifacts
         run: |
-          if [ ! -f ./bin/cub_darwin-amd64 ] || [ ! -f ./bin/cub_darwin-arm64 ] || \
-             [ ! -f ./bin/cub_windows-amd64 ] || [ ! -f ./bin/cub_linux-amd64 ]; then
-            echo "Error: One or more binaries are missing!"
-            exit 1
-          fi
-          echo "DARWIN_AMD64=./bin/cub_darwin-amd64" >> $GITHUB_ENV
-          echo "DARWIN_ARM64=./bin/cub_darwin-arm64" >> $GITHUB_ENV
-          echo "WINDOWS_AMD64=./bin/cub_windows-amd64" >> $GITHUB_ENV
-          echo "LINUX_AMD64=./bin/cub_linux-amd64" >> $GITHUB_ENV
-
-      - name: Install Expect
-        run: sudo apt-get install -y expect
-
-      - name: Run terminal-based tests on Darwin (amd64)
-        run: |
-          chmod +x tests/expect_test.sh
-          ./tests/expect_test.sh $DARWIN_AMD64
-
-      - name: Run terminal-based tests on Darwin (arm64)
-        run: |
-          chmod +x tests/expect_test.sh
-          ./tests/expect_test.sh $DARWIN_ARM64
-
-      - name: Run terminal-based tests on Windows (amd64)
-        run: |
-          chmod +x tests/expect_test.sh
-          ./tests/expect_test.sh $WINDOWS_AMD64
-
-      - name: Run terminal-based tests on Linux (amd64)
-        run: |
-          chmod +x tests/expect_test.sh
-          ./tests/expect_test.sh $LINUX_AMD64
+          for target in darwin-amd64 darwin-arm64 windows-amd64 linux-amd64; do
+            if [ ! -f "./bin/cub_${target}" ]; then
+              echo "Missing binary: bin/cub_${target}"
+              exit 1
+            fi
+          done
+          echo "All cross-compiled binaries present."
